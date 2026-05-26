@@ -84,8 +84,7 @@ export default function AdminPage() {
     } = await supabase.auth.getSession();
 
     if (!session?.user) {
-      setMessage("Ingen session hittades.");
-      setLoading(false);
+      router.push("/");
       return;
     }
 
@@ -93,8 +92,7 @@ export default function AdminPage() {
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
 
     if (userEmail !== adminEmail) {
-      setMessage(`Inte admin. Inloggad som: ${userEmail}. Admin är: ${adminEmail}`);
-      setLoading(false);
+      router.push("/dashboard");
       return;
     }
 
@@ -113,10 +111,10 @@ export default function AdminPage() {
 
     if (data?.[0]) {
       setSelectedTournamentId(data[0].id);
-  }
+    }
 
-  setLoading(false);
-}
+    setLoading(false);
+  }
 
   async function loadMatches() {
     const { data, error } = await supabase
@@ -200,27 +198,79 @@ export default function AdminPage() {
     );
   }
 
+  async function callSupabaseFunction(functionName: string, body: object) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !anonKey) {
+      throw new Error("Saknar Supabase env.");
+    }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${anonKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error ?? `Kunde inte köra ${functionName}.`);
+    }
+
+    return result;
+  }
+
+  async function recalculateLeaguePoints(matchId: string) {
+    return callSupabaseFunction("recalculate-league-points", { matchId });
+  }
+
   async function saveMatch(match: Match) {
     setMessage("");
     setSavingMatchId(match.id);
 
+    const payload = {
+      home_goals: match.home_goals,
+      away_goals: match.away_goals,
+      status: match.status,
+    };
+
     const { error } = await supabase
       .from("matches")
-      .update({
-        home_goals: match.home_goals,
-        away_goals: match.away_goals,
-        status: match.status,
-      })
+      .update(payload)
       .eq("id", match.id);
 
     if (error) {
-      setMessage(error.message);
+      setMessage(`Fel vid sparning: ${error.message}`);
       setSavingMatchId(null);
       return;
     }
 
-    setMessage("Match uppdaterad! ✅");
-    await loadMatches();
+    try {
+      if (match.status === "finished") {
+        await recalculateLeaguePoints(match.id);
+
+        setMessage(
+          `Match sparad och poäng omräknade! Resultat: ${
+            match.home_goals ?? "-"
+          } - ${match.away_goals ?? "-"}`
+        );
+      } else {
+        setMessage("Match sparad!");
+      }
+    } catch (recalculateError) {
+      setMessage(
+        `Match sparad, men poängräkning misslyckades: ${
+          recalculateError instanceof Error
+            ? recalculateError.message
+            : "Okänt fel"
+        }`
+      );
+    }
+
     setSavingMatchId(null);
   }
 
@@ -346,7 +396,7 @@ export default function AdminPage() {
           <button
             onClick={saveTournamentResult}
             disabled={savingTournamentResult}
-            className="mt-5 rounded-xl bg-purple-500 px-6 py-3 font-black hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            className="mt-5 rounded-xl bg-purple-500 px-6 py-3 font-black hover:bg-purple-400 disabled:bg-slate-700"
           >
             {savingTournamentResult ? "Sparar..." : "Spara slutresultat"}
           </button>
@@ -355,89 +405,66 @@ export default function AdminPage() {
         <div className="rounded-3xl border border-white/10 bg-white/10 p-6">
           <h2 className="mb-5 text-2xl font-black">Matcher</h2>
 
-          {matches.length === 0 ? (
-            <div className="rounded-2xl bg-slate-900 p-6 text-slate-300">
-              Inga matcher hittades.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {matches.map((match) => (
-                <div
-                  key={match.id}
-                  className="rounded-2xl border border-white/10 bg-slate-900 p-4"
-                >
-                  <p className="text-xs text-slate-500">
-                    {match.round} ·{" "}
-                    {new Date(match.kickoff_at).toLocaleString("sv-SE")}
-                  </p>
+          <div className="space-y-4">
+            {matches.map((match) => (
+              <div
+                key={match.id}
+                className="rounded-2xl border border-white/10 bg-slate-900 p-4"
+              >
+                <p className="text-xs text-slate-500">
+                  {match.round} ·{" "}
+                  {new Date(match.kickoff_at).toLocaleString("sv-SE")}
+                </p>
 
-                  <h3 className="mb-4 mt-2 text-xl font-black">
-                    {match.home_team?.name ?? "Ej klart"} -{" "}
-                    {match.away_team?.name ?? "Ej klart"}
-                  </h3>
+                <h3 className="mb-4 mt-2 text-xl font-black">
+                  {match.home_team?.name ?? "Ej klart"} -{" "}
+                  {match.away_team?.name ?? "Ej klart"}
+                </h3>
 
-                  <div className="grid gap-3 md:grid-cols-[120px_120px_180px_auto] md:items-end">
-                    <div>
-                      <label className="text-xs text-slate-400">Hemmalag</label>
-                      <input
-                        type="number"
-                        value={match.home_goals ?? ""}
-                        onChange={(e) =>
-                          updateMatchField(
-                            match.id,
-                            "home_goals",
-                            e.target.value
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
-                      />
-                    </div>
+                <div className="grid gap-3 md:grid-cols-[120px_120px_180px_auto] md:items-end">
+                  <input
+                    type="number"
+                    value={match.home_goals ?? ""}
+                    onChange={(e) =>
+                      updateMatchField(match.id, "home_goals", e.target.value)
+                    }
+                    className="rounded-xl bg-slate-800 px-4 py-3"
+                  />
 
-                    <div>
-                      <label className="text-xs text-slate-400">Bortalag</label>
-                      <input
-                        type="number"
-                        value={match.away_goals ?? ""}
-                        onChange={(e) =>
-                          updateMatchField(
-                            match.id,
-                            "away_goals",
-                            e.target.value
-                          )
-                        }
-                        className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
-                      />
-                    </div>
+                  <input
+                    type="number"
+                    value={match.away_goals ?? ""}
+                    onChange={(e) =>
+                      updateMatchField(match.id, "away_goals", e.target.value)
+                    }
+                    className="rounded-xl bg-slate-800 px-4 py-3"
+                  />
 
-                    <div>
-                      <label className="text-xs text-slate-400">Status</label>
-                      <select
-                        value={match.status}
-                        onChange={(e) =>
-                          updateMatchField(match.id, "status", e.target.value)
-                        }
-                        className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
-                      >
-                        <option value="upcoming">upcoming</option>
-                        <option value="live">live</option>
-                        <option value="finished">finished</option>
-                        <option value="postponed">postponed</option>
-                        <option value="cancelled">cancelled</option>
-                      </select>
-                    </div>
+                  <select
+                    value={match.status}
+                    onChange={(e) =>
+                      updateMatchField(match.id, "status", e.target.value)
+                    }
+                    className="rounded-xl bg-slate-800 px-4 py-3"
+                  >
+                    <option value="upcoming">upcoming</option>
+                    <option value="live">live</option>
+                    <option value="finished">finished</option>
+                    <option value="postponed">postponed</option>
+                    <option value="cancelled">cancelled</option>
+                  </select>
 
-                    <button
-                      onClick={() => saveMatch(match)}
-                      disabled={savingMatchId === match.id}
-                      className="rounded-xl bg-emerald-500 px-6 py-3 font-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-                    >
-                      {savingMatchId === match.id ? "Sparar..." : "Spara"}
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => saveMatch(match)}
+                    disabled={savingMatchId === match.id}
+                    className="rounded-xl bg-emerald-500 px-6 py-3 font-black disabled:bg-slate-700"
+                  >
+                    {savingMatchId === match.id ? "Sparar..." : "Spara"}
+                  </button>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </main>

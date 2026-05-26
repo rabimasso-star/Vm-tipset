@@ -119,8 +119,34 @@ export default function LeaguePage() {
   const [leavingLeague, setLeavingLeague] = useState(false);
 
   useEffect(() => {
-    if (leagueId) loadLeaguePage();
-  }, [leagueId]);
+    if (!leagueId) return;
+
+    const channel = supabase
+      .channel(`leaderboard-${leagueId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "leaderboard",
+          filter: `league_id=eq.${leagueId}`,
+        },
+        async () => {
+          const { data } = await supabase
+            .from("leaderboard")
+            .select("*")
+            .eq("league_id", leagueId)
+            .order("total_points", { ascending: false });
+
+          setLeaderboard(data ?? []);
+        },
+      )
+      .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [leagueId]);
 
   const filteredMatches = useMemo(() => {
     if (filter === "all") return matches;
