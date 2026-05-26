@@ -517,7 +517,17 @@ export default function LeaguePage() {
       return;
     }
 
-    setLeague(leagueData as League);
+    const normalizedLeague: League = {
+      id: leagueData.id,
+      name: leagueData.name,
+      invite_code: leagueData.invite_code,
+      tournament_id: leagueData.tournament_id,
+      tournaments: Array.isArray(leagueData.tournaments)
+        ? leagueData.tournaments[0] ?? null
+        : leagueData.tournaments,
+    };
+
+setLeague(normalizedLeague);
 
     const { data: leaderboardData } = await supabase
       .from("leaderboard")

@@ -17,6 +17,10 @@ type MatchStatus =
   | "postponed"
   | "cancelled";
 
+type TeamRef = {
+  name: string;
+} | null;
+
 type Match = {
   id: string;
   round: string;
@@ -24,8 +28,8 @@ type Match = {
   status: MatchStatus;
   home_goals: number | null;
   away_goals: number | null;
-  home_team: { name: string } | null;
-  away_team: { name: string } | null;
+  home_team: TeamRef;
+  away_team: TeamRef;
 };
 
 type TournamentResult = {
@@ -34,6 +38,14 @@ type TournamentResult = {
   third_place_team: string;
   top_scorer: string;
 };
+
+function normalizeTeamRef(value: unknown): TeamRef {
+  if (Array.isArray(value)) {
+    return (value[0] as TeamRef) ?? null;
+  }
+
+  return (value as TeamRef) ?? null;
+}
 
 export default function AdminPage() {
   const router = useRouter();
@@ -88,11 +100,14 @@ export default function AdminPage() {
 
     if (error) {
       setMessage(error.message);
-    } else {
-      setTournaments(data ?? []);
-      if (data?.[0]) {
-        setSelectedTournamentId(data[0].id);
-      }
+      setLoading(false);
+      return;
+    }
+
+    setTournaments(data ?? []);
+
+    if (data?.[0]) {
+      setSelectedTournamentId(data[0].id);
     }
 
     setLoading(false);
@@ -117,23 +132,21 @@ export default function AdminPage() {
     if (error) {
       setMessage(error.message);
       return;
-  }
+    }
 
-  const normalizedMatches: Match[] =
-    data?.map((match: any) => ({
-      ...match,
-      home_team: Array.isArray(match.home_team)
-        ? match.home_team[0] ?? null
-        : match.home_team,
-      away_team: Array.isArray(match.away_team)
-        ? match.away_team[0] ?? null
-        : match.away_team,
-    })) ?? [];
+    const normalizedMatches: Match[] =
+      data?.map((match: any) => ({
+        id: match.id,
+        round: match.round,
+        kickoff_at: match.kickoff_at,
+        status: match.status,
+        home_goals: match.home_goals,
+        away_goals: match.away_goals,
+        home_team: normalizeTeamRef(match.home_team),
+        away_team: normalizeTeamRef(match.away_team),
+      })) ?? [];
 
-  setMatches(normalizedMatches);
-}
-
-    setMatches((data as Match[]) ?? []);
+    setMatches(normalizedMatches);
   }
 
   async function loadTournamentResult() {
@@ -143,21 +156,12 @@ export default function AdminPage() {
       .eq("tournament_id", selectedTournamentId)
       .maybeSingle();
 
-    if (data) {
-      setTournamentResult({
-        winner_team: data.winner_team ?? "",
-        runner_up_team: data.runner_up_team ?? "",
-        third_place_team: data.third_place_team ?? "",
-        top_scorer: data.top_scorer ?? "",
-      });
-    } else {
-      setTournamentResult({
-        winner_team: "",
-        runner_up_team: "",
-        third_place_team: "",
-        top_scorer: "",
-      });
-    }
+    setTournamentResult({
+      winner_team: data?.winner_team ?? "",
+      runner_up_team: data?.runner_up_team ?? "",
+      third_place_team: data?.third_place_team ?? "",
+      top_scorer: data?.top_scorer ?? "",
+    });
   }
 
   function updateMatchField(
@@ -191,23 +195,18 @@ export default function AdminPage() {
     );
   }
 
-  async function saveMatch(
-    matchId: string,
-    homeGoals: number | null,
-    awayGoals: number | null,
-    status: MatchStatus
-  ) {
+  async function saveMatch(match: Match) {
     setMessage("");
-    setSavingMatchId(matchId);
+    setSavingMatchId(match.id);
 
     const { error } = await supabase
       .from("matches")
       .update({
-        home_goals: homeGoals,
-        away_goals: awayGoals,
-        status,
+        home_goals: match.home_goals,
+        away_goals: match.away_goals,
+        status: match.status,
       })
-      .eq("id", matchId);
+      .eq("id", match.id);
 
     if (error) {
       setMessage(error.message);
@@ -249,29 +248,29 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
         Laddar admin...
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-slate-950 p-4 text-white md:p-8">
+      <div className="mx-auto max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-5xl font-black">Adminpanel</h1>
-          <p className="text-slate-400 mt-2">
+          <h1 className="text-3xl font-black md:text-5xl">Adminpanel</h1>
+          <p className="mt-2 text-slate-400">
             Uppdatera matchresultat, status och turneringens slutresultat.
           </p>
         </div>
 
         {message && (
-          <div className="mb-6 rounded-2xl bg-slate-900 border border-white/10 p-4">
+          <div className="mb-6 rounded-2xl border border-white/10 bg-slate-900 p-4">
             {message}
           </div>
         )}
 
-        <div className="mb-8 rounded-3xl bg-white/10 border border-white/10 p-6">
+        <div className="mb-8 rounded-3xl border border-white/10 bg-white/10 p-6">
           <label className="text-sm text-slate-400">Turnering</label>
           <select
             value={selectedTournamentId}
@@ -286,10 +285,10 @@ export default function AdminPage() {
           </select>
         </div>
 
-        <div className="mb-8 rounded-3xl bg-white/10 border border-white/10 p-6">
-          <h2 className="text-2xl font-black mb-5">Slutresultat turnering</h2>
+        <div className="mb-8 rounded-3xl border border-white/10 bg-white/10 p-6">
+          <h2 className="mb-5 text-2xl font-black">Slutresultat turnering</h2>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <input
               value={tournamentResult.winner_team}
               onChange={(e) =>
@@ -348,84 +347,92 @@ export default function AdminPage() {
           </button>
         </div>
 
-        <div className="rounded-3xl bg-white/10 border border-white/10 p-6">
-          <h2 className="text-2xl font-black mb-5">Matcher</h2>
+        <div className="rounded-3xl border border-white/10 bg-white/10 p-6">
+          <h2 className="mb-5 text-2xl font-black">Matcher</h2>
 
-          <div className="space-y-4">
-            {matches.map((match) => (
-              <div
-                key={match.id}
-                className="rounded-2xl bg-slate-900 border border-white/10 p-4"
-              >
-                <p className="text-xs text-slate-500">
-                  {match.round} ·{" "}
-                  {new Date(match.kickoff_at).toLocaleString("sv-SE")}
-                </p>
+          {matches.length === 0 ? (
+            <div className="rounded-2xl bg-slate-900 p-6 text-slate-300">
+              Inga matcher hittades.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {matches.map((match) => (
+                <div
+                  key={match.id}
+                  className="rounded-2xl border border-white/10 bg-slate-900 p-4"
+                >
+                  <p className="text-xs text-slate-500">
+                    {match.round} ·{" "}
+                    {new Date(match.kickoff_at).toLocaleString("sv-SE")}
+                  </p>
 
-                <h3 className="text-xl font-black mt-2 mb-4">
-                  {match.home_team?.name} - {match.away_team?.name}
-                </h3>
+                  <h3 className="mb-4 mt-2 text-xl font-black">
+                    {match.home_team?.name ?? "Ej klart"} -{" "}
+                    {match.away_team?.name ?? "Ej klart"}
+                  </h3>
 
-                <div className="grid md:grid-cols-[120px_120px_180px_auto] gap-3 items-end">
-                  <div>
-                    <label className="text-xs text-slate-400">Hemmalag</label>
-                    <input
-                      type="number"
-                      value={match.home_goals ?? ""}
-                      onChange={(e) =>
-                        updateMatchField(match.id, "home_goals", e.target.value)
-                      }
-                      className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
-                    />
-                  </div>
+                  <div className="grid gap-3 md:grid-cols-[120px_120px_180px_auto] md:items-end">
+                    <div>
+                      <label className="text-xs text-slate-400">Hemmalag</label>
+                      <input
+                        type="number"
+                        value={match.home_goals ?? ""}
+                        onChange={(e) =>
+                          updateMatchField(
+                            match.id,
+                            "home_goals",
+                            e.target.value
+                          )
+                        }
+                        className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="text-xs text-slate-400">Bortalag</label>
-                    <input
-                      type="number"
-                      value={match.away_goals ?? ""}
-                      onChange={(e) =>
-                        updateMatchField(match.id, "away_goals", e.target.value)
-                      }
-                      className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
-                    />
-                  </div>
+                    <div>
+                      <label className="text-xs text-slate-400">Bortalag</label>
+                      <input
+                        type="number"
+                        value={match.away_goals ?? ""}
+                        onChange={(e) =>
+                          updateMatchField(
+                            match.id,
+                            "away_goals",
+                            e.target.value
+                          )
+                        }
+                        className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="text-xs text-slate-400">Status</label>
-                    <select
-                      value={match.status}
-                      onChange={(e) =>
-                        updateMatchField(match.id, "status", e.target.value)
-                      }
-                      className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
+                    <div>
+                      <label className="text-xs text-slate-400">Status</label>
+                      <select
+                        value={match.status}
+                        onChange={(e) =>
+                          updateMatchField(match.id, "status", e.target.value)
+                        }
+                        className="mt-1 w-full rounded-xl bg-slate-800 px-4 py-3 outline-none"
+                      >
+                        <option value="upcoming">upcoming</option>
+                        <option value="live">live</option>
+                        <option value="finished">finished</option>
+                        <option value="postponed">postponed</option>
+                        <option value="cancelled">cancelled</option>
+                      </select>
+                    </div>
+
+                    <button
+                      onClick={() => saveMatch(match)}
+                      disabled={savingMatchId === match.id}
+                      className="rounded-xl bg-emerald-500 px-6 py-3 font-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                     >
-                      <option value="upcoming">upcoming</option>
-                      <option value="live">live</option>
-                      <option value="finished">finished</option>
-                      <option value="postponed">postponed</option>
-                      <option value="cancelled">cancelled</option>
-                    </select>
+                      {savingMatchId === match.id ? "Sparar..." : "Spara"}
+                    </button>
                   </div>
-
-                  <button
-                    onClick={() =>
-                      saveMatch(
-                        match.id,
-                        match.home_goals,
-                        match.away_goals,
-                        match.status
-                      )
-                    }
-                    disabled={savingMatchId === match.id}
-                    className="rounded-xl bg-emerald-500 px-6 py-3 font-black hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-                  >
-                    {savingMatchId === match.id ? "Sparar..." : "Spara"}
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </main>

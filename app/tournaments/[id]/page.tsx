@@ -70,7 +70,18 @@ export default function TournamentPage() {
       setMessage(matchesError.message);
     }
 
-    setMatches((matchesData as Match[]) ?? []);
+    const normalizedMatches: Match[] =
+      matchesData?.map((match: any) => ({
+        ...match,
+        home_team: Array.isArray(match.home_team)
+          ? match.home_team[0] ?? null
+          : match.home_team,
+        away_team: Array.isArray(match.away_team)
+          ? match.away_team[0] ?? null
+          : match.away_team,
+      })) ?? [];
+
+    setMatches(normalizedMatches);
     setLoading(false);
   }
 
