@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/sync-results?secret=Crunch84!",
+      "schedule": "*/30 * * * *"
+    }
+  ]
+}
