@@ -116,7 +116,12 @@ export default function LeaguePage() {
   const [loading, setLoading] = useState(true);
   const [savingBonus, setSavingBonus] = useState(false);
   const [savingPredictionId, setSavingPredictionId] = useState<string | null>(null);
+  const [bonusLocked, setBonusLocked] = useState(false);
   const [leavingLeague, setLeavingLeague] = useState(false);
+
+  useEffect(() => {
+    if (leagueId) loadLeaguePage();
+  }, [leagueId]);
 
   useEffect(() => {
     if (!leagueId) return;
@@ -553,7 +558,7 @@ export default function LeaguePage() {
         : leagueData.tournaments,
     };
 
-setLeague(normalizedLeague);
+    setLeague(normalizedLeague);
 
     const { data: leaderboardData } = await supabase
       .from("leaderboard")
@@ -591,7 +596,25 @@ setLeague(normalizedLeague);
       setMessage(matchesError.message);
     }
 
-    setMatches((matchesData as Match[]) ?? []);
+    const loadedMatches =
+      matchesData?.map((match: any) => ({
+        ...match,
+        home_team: Array.isArray(match.home_team)
+          ? match.home_team[0] ?? null
+          : match.home_team,
+        away_team: Array.isArray(match.away_team)
+          ? match.away_team[0] ?? null
+          : match.away_team,
+      })) ?? [];
+
+    setMatches(loadedMatches);
+
+    const tournamentStarted = loadedMatches.some((match) => {
+      if (!match.kickoff_at) return false;
+      return new Date(match.kickoff_at).getTime() <= Date.now();
+    });
+
+    setBonusLocked(tournamentStarted);
 
     if (user) {
       const { data: predictions } = await supabase
@@ -927,17 +950,23 @@ setLeague(normalizedLeague);
                 <p className="text-slate-400 text-sm mt-1">
                   Tippa slutplaceringar och skytteligavinnare.
                 </p>
+                {bonusLocked && (
+                  <p className="mt-2 rounded-xl bg-yellow-500/10 px-3 py-2 text-sm font-bold text-yellow-300">
+                    Bonus-tips är låsta eftersom turneringen har startat.
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-slate-400">Vinnare</label>
                   <select
+                    disabled={bonusLocked}
                     value={tournamentPrediction.winner_team}
                     onChange={(e) =>
                       updateTournamentPrediction("winner_team", e.target.value)
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none"
+                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -951,6 +980,7 @@ setLeague(normalizedLeague);
                 <div>
                   <label className="text-sm text-slate-400">Andraplats</label>
                   <select
+                    disabled={bonusLocked}
                     value={tournamentPrediction.runner_up_team}
                     onChange={(e) =>
                       updateTournamentPrediction(
@@ -958,7 +988,7 @@ setLeague(normalizedLeague);
                         e.target.value,
                       )
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none"
+                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -972,6 +1002,7 @@ setLeague(normalizedLeague);
                 <div>
                   <label className="text-sm text-slate-400">Tredjeplats</label>
                   <select
+                    disabled={bonusLocked}
                     value={tournamentPrediction.third_place_team}
                     onChange={(e) =>
                       updateTournamentPrediction(
@@ -979,7 +1010,7 @@ setLeague(normalizedLeague);
                         e.target.value,
                       )
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none"
+                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -996,12 +1027,13 @@ setLeague(normalizedLeague);
                   </label>
                   <input
                     type="text"
+                    disabled={bonusLocked}
                     value={tournamentPrediction.top_scorer}
                     onChange={(e) =>
                       updateTournamentPrediction("top_scorer", e.target.value)
                     }
                     placeholder="Ex: Kylian Mbappé"
-                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none"
+                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-40"
                   />
                 </div>
               </div>
@@ -1009,14 +1041,16 @@ setLeague(normalizedLeague);
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <button
                   onClick={saveTournamentPrediction}
-                  disabled={!bonusHasChanged || savingBonus}
+                  disabled={bonusLocked || !bonusHasChanged || savingBonus}
                   className="rounded-xl bg-purple-500 px-6 py-3 font-black hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                 >
-                  {savingBonus
-                    ? "Sparar..."
-                    : bonusHasChanged
-                      ? "Spara bonus-tips"
-                      : "Bonus sparat ✅"}
+                  {bonusLocked
+                    ? "Bonus låst"
+                    : savingBonus
+                      ? "Sparar..."
+                      : bonusHasChanged
+                        ? "Spara bonus-tips"
+                        : "Bonus sparat ✅"}
                 </button>
 
                 {!bonusHasChanged && (
