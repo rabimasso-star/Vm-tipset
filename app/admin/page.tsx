@@ -80,16 +80,21 @@ export default function AdminPage() {
     setLoading(true);
 
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    if (!user) {
-      router.push("/");
+    if (!session?.user) {
+      setMessage("Ingen session hittades.");
+      setLoading(false);
       return;
     }
 
-    if (user.email !== process.env.NEXT_PUBLIC_ADMIN_EMAIL) {
-      router.push("/dashboard");
+    const userEmail = session.user.email?.toLowerCase().trim();
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
+
+    if (userEmail !== adminEmail) {
+      setMessage(`Inte admin. Inloggad som: ${userEmail}. Admin är: ${adminEmail}`);
+      setLoading(false);
       return;
     }
 
@@ -108,10 +113,10 @@ export default function AdminPage() {
 
     if (data?.[0]) {
       setSelectedTournamentId(data[0].id);
-    }
-
-    setLoading(false);
   }
+
+  setLoading(false);
+}
 
   async function loadMatches() {
     const { data, error } = await supabase
