@@ -117,7 +117,21 @@ export default function AdminPage() {
     if (error) {
       setMessage(error.message);
       return;
-    }
+  }
+
+  const normalizedMatches: Match[] =
+    data?.map((match: any) => ({
+      ...match,
+      home_team: Array.isArray(match.home_team)
+        ? match.home_team[0] ?? null
+        : match.home_team,
+      away_team: Array.isArray(match.away_team)
+        ? match.away_team[0] ?? null
+        : match.away_team,
+    })) ?? [];
+
+  setMatches(normalizedMatches);
+}
 
     setMatches((data as Match[]) ?? []);
   }
