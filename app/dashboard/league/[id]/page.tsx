@@ -118,40 +118,27 @@ export default function LeaguePage() {
   const [savingPredictionId, setSavingPredictionId] = useState<string | null>(null);
   const [bonusLocked, setBonusLocked] = useState(false);
   const [leavingLeague, setLeavingLeague] = useState(false);
+  const [lastAutoRefreshAt, setLastAutoRefreshAt] = useState<string>("Aldrig");
+  const [autoRefreshCount, setAutoRefreshCount] = useState(0);
 
   useEffect(() => {
-    if (leagueId) loadLeaguePage();
+    if (leagueId) {
+      loadLeaguePage();
+    }
   }, [leagueId]);
 
   useEffect(() => {
-    if (!leagueId) return;
+    if (!leagueId || !league?.tournament_id) return;
 
-    const channel = supabase
-      .channel(`leaderboard-${leagueId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "leaderboard",
-          filter: `league_id=eq.${leagueId}`,
-        },
-        async () => {
-          const { data } = await supabase
-            .from("leaderboard")
-            .select("*")
-            .eq("league_id", leagueId)
-            .order("total_points", { ascending: false });
+    const interval = window.setInterval(() => {
+      loadMatchesOnly(league.tournament_id);
+      loadLeaderboardOnly();
+    }, 3000);
 
-          setLeaderboard(data ?? []);
-        },
-      )
-      .subscribe();
-
-  return () => {
-    supabase.removeChannel(channel);
-  };
-}, [leagueId]);
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [leagueId, league?.tournament_id]);
 
   const filteredMatches = useMemo(() => {
     if (filter === "all") return matches;
@@ -608,6 +595,8 @@ export default function LeaguePage() {
       })) ?? [];
 
     setMatches(loadedMatches);
+    setLastAutoRefreshAt(new Date().toLocaleTimeString("sv-SE"));
+    setAutoRefreshCount((prev) => prev + 1);
 
     const tournamentStarted = loadedMatches.some((match) => {
       if (!match.kickoff_at) return false;
@@ -664,6 +653,64 @@ export default function LeaguePage() {
     }
 
     setLoading(false);
+  }
+
+  async function loadLeaderboardOnly() {
+    if (!leagueId) return;
+
+    const { data, error } = await supabase
+      .from("leaderboard")
+      .select("*")
+      .eq("league_id", leagueId)
+      .order("total_points", { ascending: false });
+
+    if (error) {
+      console.error("Kunde inte uppdatera leaderboard", error.message);
+      return;
+    }
+
+    setLeaderboard(data ?? []);
+  }
+
+  async function loadMatchesOnly(tournamentId: string) {
+    const { data, error } = await supabase
+      .from("matches")
+      .select(
+        `
+        *,
+        home_team:teams!matches_home_team_id_fkey(name),
+        away_team:teams!matches_away_team_id_fkey(name)
+      `,
+      )
+      .eq("tournament_id", tournamentId)
+      .order("kickoff_at", { ascending: true });
+
+    if (error) {
+      console.error("Kunde inte uppdatera matcher", error.message);
+      return;
+    }
+
+    const loadedMatches =
+      data?.map((match: any) => ({
+        ...match,
+        home_team: Array.isArray(match.home_team)
+          ? match.home_team[0] ?? null
+          : match.home_team,
+        away_team: Array.isArray(match.away_team)
+          ? match.away_team[0] ?? null
+          : match.away_team,
+      })) ?? [];
+
+    setMatches(loadedMatches);
+    setLastAutoRefreshAt(new Date().toLocaleTimeString("sv-SE"));
+    setAutoRefreshCount((prev) => prev + 1);
+
+    const tournamentStarted = loadedMatches.some((match) => {
+      if (!match.kickoff_at) return false;
+      return new Date(match.kickoff_at).getTime() <= Date.now();
+    });
+
+    setBonusLocked(tournamentStarted);
   }
 
   async function saveTournamentPrediction() {
@@ -1467,6 +1514,25 @@ export default function LeaguePage() {
                   <p className="text-slate-400 text-sm mt-1">
                     Vid oavgjort i slutspel måste du välja vinnare.
                   </p>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                    <span className="rounded-full bg-slate-900 px-3 py-1">
+                      Auto-refresh: {lastAutoRefreshAt} ({autoRefreshCount})
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (league?.tournament_id) {
+                          loadMatchesOnly(league.tournament_id);
+                          loadLeaderboardOnly();
+                        }
+                      }}
+                      className="rounded-full bg-emerald-500/20 px-3 py-1 font-black text-emerald-300 hover:bg-emerald-500/30"
+                    >
+                      Uppdatera matcher nu
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex gap-2">
