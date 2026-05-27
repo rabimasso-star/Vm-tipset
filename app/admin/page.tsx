@@ -237,11 +237,12 @@ export default function AdminPage() {
       away_goals: match.away_goals,
       status: match.status,
     };
-
-    const { error } = await supabase
+    
+    const { data, error } = await supabase
       .from("matches")
       .update(payload)
-      .eq("id", match.id);
+      .eq("id", match.id)
+      .select();
 
     if (error) {
       setMessage(`Fel vid sparning: ${error.message}`);

@@ -22,6 +22,16 @@ type LeaderboardRow = {
   total_points: number;
 };
 
+type MatchPoint = {
+  match_id: string;
+  home_goal_points: number | null;
+  away_goal_points: number | null;
+  sign_points: number | null;
+  total_points: number | null;
+};
+
+type MatchPointsById = Record<string, MatchPoint>;
+
 type MatchStatus = "upcoming" | "live" | "finished" | "postponed" | "cancelled";
 
 type TeamRef = {
@@ -94,8 +104,12 @@ export default function LeaguePage() {
   const [predictionInputs, setPredictionInputs] = useState<PredictionInputs>(
     {},
   );
+  const [matchPointsById, setMatchPointsById] = useState<MatchPointsById>({});
   const [showGroupTables, setShowGroupTables] = useState(false);
   const [showBracket, setShowBracket] = useState(false);
+  const [bracketMode, setBracketMode] = useState<"predictions" | "actual">(
+  "predictions",
+  );
   const [tournamentPrediction, setTournamentPrediction] =
     useState<TournamentPrediction>({
       winner_team: "",
@@ -118,8 +132,6 @@ export default function LeaguePage() {
   const [savingPredictionId, setSavingPredictionId] = useState<string | null>(null);
   const [bonusLocked, setBonusLocked] = useState(false);
   const [leavingLeague, setLeavingLeague] = useState(false);
-  const [lastAutoRefreshAt, setLastAutoRefreshAt] = useState<string>("Aldrig");
-  const [autoRefreshCount, setAutoRefreshCount] = useState(0);
 
   useEffect(() => {
     if (leagueId) {
@@ -133,6 +145,7 @@ export default function LeaguePage() {
     const interval = window.setInterval(() => {
       loadMatchesOnly(league.tournament_id);
       loadLeaderboardOnly();
+      loadMatchPointsOnly();
     }, 3000);
 
     return () => {
@@ -202,87 +215,107 @@ export default function LeaguePage() {
     };
   }
 
-  const groupTables = useMemo<GroupTables>(() => {
-    const tables: Record<string, Record<string, GroupRow>> = {};
+const groupTables = useMemo<GroupTables>(() => {
+  const tables: Record<string, Record<string, GroupRow>> = {};
 
-    matches.forEach((match) => {
-      if (match.round !== "Group Stage") return;
+  matches.forEach((match) => {
+    if (match.round !== "Group Stage") return;
+    if (match.status !== "finished") return;
 
-      const groupLetter = getMatchGroup(match);
-      if (!groupLetter) return;
+    const groupLetter = getMatchGroup(match);
+    if (!groupLetter) return;
 
-      const homeName = match.home_team?.name;
-      const awayName = match.away_team?.name;
+    const homeName = match.home_team?.name;
+    const awayName = match.away_team?.name;
 
-      if (!homeName || !awayName) return;
-      if (isPlaceholderTeam(homeName) || isPlaceholderTeam(awayName)) return;
+    if (!homeName || !awayName) return;
 
-      if (!tables[groupLetter]) tables[groupLetter] = {};
+    if (!tables[groupLetter]) {
+      tables[groupLetter] = {};
+    }
 
-      if (!tables[groupLetter][homeName]) {
-        tables[groupLetter][homeName] = {
-          team: homeName,
-          played: 0,
-          points: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-          goalDifference: 0,
-        };
+    if (!tables[groupLetter][homeName]) {
+      tables[groupLetter][homeName] = {
+        team: homeName,
+        played: 0,
+        points: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
+      };
+    }
+
+    if (!tables[groupLetter][awayName]) {
+      tables[groupLetter][awayName] = {
+        team: awayName,
+        played: 0,
+        points: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
+      };
+    }
+
+    if (
+      match.home_goals === null ||
+      match.away_goals === null
+    ) {
+      return;
+    }
+
+    const homeGoals = Number(match.home_goals);
+    const awayGoals = Number(match.away_goals);
+
+    const homeRow = tables[groupLetter][homeName];
+    const awayRow = tables[groupLetter][awayName];
+
+    homeRow.played += 1;
+    awayRow.played += 1;
+
+    homeRow.goalsFor += homeGoals;
+    homeRow.goalsAgainst += awayGoals;
+
+    awayRow.goalsFor += awayGoals;
+    awayRow.goalsAgainst += homeGoals;
+
+    if (homeGoals > awayGoals) {
+      homeRow.points += 3;
+    } else if (homeGoals < awayGoals) {
+      awayRow.points += 3;
+    } else {
+      homeRow.points += 1;
+      awayRow.points += 1;
+    }
+
+    homeRow.goalDifference =
+      homeRow.goalsFor - homeRow.goalsAgainst;
+
+    awayRow.goalDifference =
+      awayRow.goalsFor - awayRow.goalsAgainst;
+  });
+
+  const sortedTables: GroupTables = {};
+
+  Object.entries(tables).forEach(([groupLetter, rows]) => {
+    sortedTables[groupLetter] = Object.values(rows).sort((a, b) => {
+      if (b.points !== a.points) {
+        return b.points - a.points;
       }
 
-      if (!tables[groupLetter][awayName]) {
-        tables[groupLetter][awayName] = {
-          team: awayName,
-          played: 0,
-          points: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-          goalDifference: 0,
-        };
+      if (b.goalDifference !== a.goalDifference) {
+        return b.goalDifference - a.goalDifference;
       }
 
-      const prediction = getPrediction(match.id);
-      if (!prediction) return;
-
-      const homeRow = tables[groupLetter][homeName];
-      const awayRow = tables[groupLetter][awayName];
-
-      homeRow.played += 1;
-      awayRow.played += 1;
-
-      homeRow.goalsFor += prediction.home;
-      homeRow.goalsAgainst += prediction.away;
-      awayRow.goalsFor += prediction.away;
-      awayRow.goalsAgainst += prediction.home;
-
-      if (prediction.home > prediction.away) {
-        homeRow.points += 3;
-      } else if (prediction.home < prediction.away) {
-        awayRow.points += 3;
-      } else {
-        homeRow.points += 1;
-        awayRow.points += 1;
+      if (b.goalsFor !== a.goalsFor) {
+        return b.goalsFor - a.goalsFor;
       }
 
-      homeRow.goalDifference = homeRow.goalsFor - homeRow.goalsAgainst;
-      awayRow.goalDifference = awayRow.goalsFor - awayRow.goalsAgainst;
+      return a.team.localeCompare(b.team);
     });
+  });
 
-    const sortedTables: GroupTables = {};
-
-    Object.entries(tables).forEach(([groupLetter, rows]) => {
-      sortedTables[groupLetter] = Object.values(rows).sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        if (b.goalDifference !== a.goalDifference) {
-          return b.goalDifference - a.goalDifference;
-        }
-        if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-        return 0;
-      });
-    });
-
-    return sortedTables;
-  }, [matches, predictionInputs]);
+  return sortedTables;
+}, [matches]);
 
   const groupTableEntries = useMemo(() => {
     return Object.entries(groupTables).sort(([a], [b]) => a.localeCompare(b));
@@ -392,53 +425,87 @@ export default function LeaguePage() {
   }
 
   const knockoutResults = useMemo<Record<number, KnockoutResult>>(() => {
-    const results: Record<number, KnockoutResult> = {};
+  const results: Record<number, KnockoutResult> = {};
 
-    const knockoutMatches = matches
-      .filter((match) => match.round !== "Group Stage")
-      .sort((a, b) => {
-        const aNumber = getMatchNumber(a) ?? 0;
-        const bNumber = getMatchNumber(b) ?? 0;
-        return aNumber - bNumber;
-      });
+  const knockoutMatches = matches
+    .filter((match) => match.round !== "Group Stage")
+    .sort((a, b) => {
+      const aNumber = getMatchNumber(a) ?? 0;
+      const bNumber = getMatchNumber(b) ?? 0;
+      return aNumber - bNumber;
+    });
 
-    knockoutMatches.forEach((match) => {
-      const matchNumber = getMatchNumber(match);
-      if (!matchNumber) return;
+  knockoutMatches.forEach((match) => {
+    const matchNumber = getMatchNumber(match);
+    if (!matchNumber) return;
 
-      const homeNameRaw = match.home_team?.name;
-      const awayNameRaw = match.away_team?.name;
-      if (!homeNameRaw || !awayNameRaw) return;
+    const homeNameRaw = match.home_team?.name;
+    const awayNameRaw = match.away_team?.name;
 
-      const homeName = resolveTeamNameWithResults(homeNameRaw, results);
-      const awayName = resolveTeamNameWithResults(awayNameRaw, results);
+    if (!homeNameRaw || !awayNameRaw) return;
 
-      if (!homeName || !awayName) return;
-      if (isPlaceholderTeam(homeName) || isPlaceholderTeam(awayName)) return;
+    const homeName = resolveTeamNameWithResults(homeNameRaw, results);
+    const awayName = resolveTeamNameWithResults(awayNameRaw, results);
 
+    if (!homeName || !awayName) return;
+
+    let homeGoals: number | null = null;
+    let awayGoals: number | null = null;
+    let winnerTeam = "";
+
+    if (bracketMode === "actual") {
+      if (match.status !== "finished") return;
+      if (match.home_goals === null || match.away_goals === null) return;
+
+      homeGoals = Number(match.home_goals);
+      awayGoals = Number(match.away_goals);
+    } else {
       const prediction = getPrediction(match.id);
       if (!prediction) return;
 
-      if (prediction.home > prediction.away) {
-        results[matchNumber] = { winner: homeName, loser: awayName };
-        return;
-      }
+      homeGoals = prediction.home;
+      awayGoals = prediction.away;
+      winnerTeam = prediction.winnerTeam;
+    }
 
-      if (prediction.home < prediction.away) {
-        results[matchNumber] = { winner: awayName, loser: homeName };
-        return;
-      }
+    if (homeGoals > awayGoals) {
+      results[matchNumber] = {
+        winner: homeName,
+        loser: awayName,
+      };
+      return;
+    }
 
-      if (prediction.home === prediction.away && prediction.winnerTeam) {
-        const winner = prediction.winnerTeam === homeName ? homeName : awayName;
-        const loser = winner === homeName ? awayName : homeName;
+    if (homeGoals < awayGoals) {
+      results[matchNumber] = {
+        winner: awayName,
+        loser: homeName,
+      };
+      return;
+    }
 
-        results[matchNumber] = { winner, loser };
-      }
-    });
+    if (winnerTeam) {
+      const winner =
+        winnerTeam === homeName ? homeName : awayName;
 
-    return results;
-  }, [matches, predictionInputs, groupTables, bestThirdPlacedTeams]);
+      const loser =
+        winner === homeName ? awayName : homeName;
+
+      results[matchNumber] = {
+        winner,
+        loser,
+      };
+    }
+  });
+
+  return results;
+}, [
+  matches,
+  predictionInputs,
+  groupTables,
+  bestThirdPlacedTeams,
+  bracketMode,
+]);
 
   const bracketRounds = useMemo(() => {
     const roundOrder = [
@@ -459,12 +526,18 @@ export default function LeaguePage() {
     return roundOrder
       .map((roundName) => {
         const roundMatches = matches
-          .filter(
-            (match) =>
-              match.round === roundName &&
+          .filter((match) => {
+            if (match.round !== roundName) return false;
+
+            if (bracketMode === "actual") {
+              return true;
+            }
+
+            return (
               predictionInputs[match.id]?.home !== "" &&
-              predictionInputs[match.id]?.away !== "",
-          )
+              predictionInputs[match.id]?.away !== ""
+            );
+          })
           .sort((a, b) => {
             const aNumber = getMatchNumber(a) ?? 0;
             const bNumber = getMatchNumber(b) ?? 0;
@@ -477,7 +550,7 @@ export default function LeaguePage() {
         };
       })
       .filter((round) => round.matches.length > 0);
-  }, [matches, knockoutResults]);
+  }, [matches, knockoutResults, bracketMode, predictionInputs]);
 
   function resolveTeamName(name?: string | null): string {
     return resolveTeamNameWithResults(name, knockoutResults);
@@ -595,8 +668,6 @@ export default function LeaguePage() {
       })) ?? [];
 
     setMatches(loadedMatches);
-    setLastAutoRefreshAt(new Date().toLocaleTimeString("sv-SE"));
-    setAutoRefreshCount((prev) => prev + 1);
 
     const tournamentStarted = loadedMatches.some((match) => {
       if (!match.kickoff_at) return false;
@@ -623,6 +694,7 @@ export default function LeaguePage() {
       });
 
       setPredictionInputs(inputMap);
+      await loadMatchPointsOnly(user.id);
 
       if (leagueData?.tournament_id) {
         const { data: bonusPrediction } = await supabase
@@ -702,8 +774,6 @@ export default function LeaguePage() {
       })) ?? [];
 
     setMatches(loadedMatches);
-    setLastAutoRefreshAt(new Date().toLocaleTimeString("sv-SE"));
-    setAutoRefreshCount((prev) => prev + 1);
 
     const tournamentStarted = loadedMatches.some((match) => {
       if (!match.kickoff_at) return false;
@@ -711,6 +781,41 @@ export default function LeaguePage() {
     });
 
     setBonusLocked(tournamentStarted);
+  }
+
+  async function loadMatchPointsOnly(userIdOverride?: string) {
+    const userId = userIdOverride ?? currentUserId;
+
+    if (!leagueId || !userId) return;
+
+    const { data, error } = await supabase
+      .from("points")
+      .select(
+        "match_id, home_goal_points, away_goal_points, sign_points, total_points",
+      )
+      .eq("league_id", leagueId)
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Kunde inte uppdatera matchpoäng", error.message);
+      return;
+    }
+
+    const pointsMap: MatchPointsById = {};
+
+    data?.forEach((row: any) => {
+      if (!row.match_id) return;
+
+      pointsMap[row.match_id] = {
+        match_id: row.match_id,
+        home_goal_points: row.home_goal_points,
+        away_goal_points: row.away_goal_points,
+        sign_points: row.sign_points,
+        total_points: row.total_points,
+      };
+    });
+
+    setMatchPointsById(pointsMap);
   }
 
   async function saveTournamentPrediction() {
@@ -1229,27 +1334,56 @@ export default function LeaguePage() {
             </div>
 
             <div className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6">
-              <button
-                type="button"
-                onClick={() => setShowBracket((prev) => !prev)}
-                className="w-full flex items-start sm:items-center justify-between gap-4 text-left"
-              >
+              <div className="w-full flex items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-2xl md:text-3xl font-black">
                     Slutspelsträd
                   </h2>
+
                   <p className="text-slate-400 text-sm mt-1">
                     Uppdateras automatiskt baserat på dina tips.
                   </p>
+
+                  {showBracket && (
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBracketMode("predictions")}
+                        className={`rounded-xl px-4 py-2 text-sm font-black ${
+                          bracketMode === "predictions"
+                            ? "bg-white text-slate-950"
+                            : "bg-slate-900 text-white"
+                        }`}
+                      >
+                        Mina tips
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setBracketMode("actual")}
+                        className={`rounded-xl px-4 py-2 text-sm font-black ${
+                          bracketMode === "actual"
+                            ? "bg-white text-slate-950"
+                            : "bg-slate-900 text-white"
+                        }`}
+                      >
+                        Resultat
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <span className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold">
+                <button
+                  type="button"
+                  onClick={() => setShowBracket((prev) => !prev)}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold hover:bg-slate-800"
+                >
                   {showBracket ? "Dölj" : "Visa"}
-                </span>
-              </button>
+                </button>
+              </div>
 
               {showBracket && (
-                <div className="mt-6 overflow-x-auto pb-4">
+                <div className="mt-6 w-full max-w-full overflow-x-auto pb-4">
                   {(() => {
                     const getRound = (names: string[]) =>
                       bracketRounds
@@ -1514,25 +1648,6 @@ export default function LeaguePage() {
                   <p className="text-slate-400 text-sm mt-1">
                     Vid oavgjort i slutspel måste du välja vinnare.
                   </p>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                    <span className="rounded-full bg-slate-900 px-3 py-1">
-                      Auto-refresh: {lastAutoRefreshAt} ({autoRefreshCount})
-                    </span>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (league?.tournament_id) {
-                          loadMatchesOnly(league.tournament_id);
-                          loadLeaderboardOnly();
-                        }
-                      }}
-                      className="rounded-full bg-emerald-500/20 px-3 py-1 font-black text-emerald-300 hover:bg-emerald-500/30"
-                    >
-                      Uppdatera matcher nu
-                    </button>
-                  </div>
                 </div>
 
                 <div className="flex gap-2">
@@ -1572,6 +1687,7 @@ export default function LeaguePage() {
                       match.away_team?.name,
                     );
                     const currentPrediction = predictionInputs[match.id];
+                    const matchPoint = matchPointsById[match.id];
                     const homeScore = Number(currentPrediction?.home);
                     const awayScore = Number(currentPrediction?.away);
 
@@ -1620,9 +1736,52 @@ export default function LeaguePage() {
                         </div>
 
                         {match.status === "finished" && (
-                          <p className="text-emerald-300 font-bold mt-3">
-                            Resultat: {match.home_goals} - {match.away_goals}
-                          </p>
+                          <div className="mt-3 space-y-2">
+                            <p className="text-emerald-300 font-bold">
+                              Resultat: {match.home_goals} - {match.away_goals}
+                            </p>
+
+                            {currentPrediction?.home !== undefined &&
+                              currentPrediction?.away !== undefined && (
+                                <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3 text-sm">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-slate-400">
+                                      Ditt tips:
+                                    </span>
+                                    <span className="font-black text-white">
+                                      {currentPrediction.home || "-"} -{" "}
+                                      {currentPrediction.away || "-"}
+                                    </span>
+
+                                    {matchPoint ? (
+                                      <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-black text-emerald-300">
+                                        +{matchPoint.total_points ?? 0} poäng
+                                      </span>
+                                    ) : (
+                                      <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-black text-slate-300">
+                                        Poäng räknas...
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {matchPoint && (
+                                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
+                                      <span>
+                                        Hemmamål:{" "}
+                                        {matchPoint.home_goal_points ?? 0}p
+                                      </span>
+                                      <span>
+                                        Bortamål:{" "}
+                                        {matchPoint.away_goal_points ?? 0}p
+                                      </span>
+                                      <span>
+                                        Tecken: {matchPoint.sign_points ?? 0}p
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                          </div>
                         )}
 
                         <div className="mt-5">
