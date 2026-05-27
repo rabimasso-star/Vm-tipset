@@ -1374,7 +1374,7 @@ const groupTables = useMemo<GroupTables>(() => {
                 <button
                   type="button"
                   onClick={() => setShowBracket((prev) => !prev)}
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold hover:bg-slate-800"
+                  className="shrink-0 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold hover:bg-slate-800"
                 >
                   {showBracket ? "Dölj" : "Visa"}
                 </button>
