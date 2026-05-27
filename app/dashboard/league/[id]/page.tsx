@@ -1344,34 +1344,41 @@ const groupTables = useMemo<GroupTables>(() => {
                     Uppdateras automatiskt baserat på dina tips.
                   </p>
 
-                  {showBracket && (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setBracketMode("predictions")}
-                        className={`rounded-xl px-4 py-2 text-sm font-black ${
-                          bracketMode === "predictions"
-                            ? "bg-white text-slate-950"
-                            : "bg-slate-900 text-white"
-                        }`}
-                      >
-                        Mina tips
-                      </button>
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBracketMode("predictions")}
+                      className={`rounded-xl px-4 py-2 text-sm font-black ${
+                        bracketMode === "predictions"
+                          ? "bg-white text-slate-950"
+                          : "bg-slate-900 text-white"
+                      }`}
+                    >
+                      Mina tips
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() => setBracketMode("actual")}
-                        className={`rounded-xl px-4 py-2 text-sm font-black ${
-                          bracketMode === "actual"
-                            ? "bg-white text-slate-950"
-                            : "bg-slate-900 text-white"
-                        }`}
-                      >
-                        Resultat
-                      </button>
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => setBracketMode("actual")}
+                      className={`rounded-xl px-4 py-2 text-sm font-black ${
+                        bracketMode === "actual"
+                          ? "bg-white text-slate-950"
+                          : "bg-slate-900 text-white"
+                      }`}
+                    >
+                      Resultat
+                    </button>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowBracket((prev) => !prev)}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold hover:bg-slate-800"
+                >
+                  {showBracket ? "Dölj" : "Visa"}
+                </button>
+              </div>
 
                 <button
                   type="button"
@@ -1637,7 +1644,7 @@ const groupTables = useMemo<GroupTables>(() => {
                   })()}
                 </div>
               )}
-            </div>
+            
 
             <div className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
