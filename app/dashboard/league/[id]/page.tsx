@@ -1380,15 +1380,6 @@ const groupTables = useMemo<GroupTables>(() => {
                 </button>
               </div>
 
-                <button
-                  type="button"
-                  onClick={() => setShowBracket((prev) => !prev)}
-                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold hover:bg-slate-800"
-                >
-                  {showBracket ? "Dölj" : "Visa"}
-                </button>
-              </div>
-
               {showBracket && (
                 <div className="mt-6 w-full max-w-full overflow-x-auto pb-4">
                   {(() => {
@@ -1544,7 +1535,7 @@ const groupTables = useMemo<GroupTables>(() => {
                     }
 
                     return (
-                      <div className="min-w-[1450px]">
+                      <div className="min-w-[1600px]">
                         <div className="grid grid-cols-[1fr_1fr_1fr_1fr_260px_1fr_1fr_1fr_1fr] gap-4 items-center">
                           <RoundColumn
                             title="Round of 32"
@@ -1645,6 +1636,7 @@ const groupTables = useMemo<GroupTables>(() => {
                 </div>
               )}
             
+            </div>
 
             <div className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
