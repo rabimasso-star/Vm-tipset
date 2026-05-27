@@ -1866,7 +1866,7 @@ const groupTables = useMemo<GroupTables>(() => {
               )}
             </div>
           </section>
-
+        
           <aside className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6 h-fit">
             <div className="mb-6 flex items-center justify-between gap-3">
               <div>
