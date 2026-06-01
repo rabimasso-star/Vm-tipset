@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/lock-predictions?secret=Crunch84!",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
