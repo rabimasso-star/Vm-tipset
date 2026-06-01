@@ -134,9 +134,11 @@ export default function LeaguePage() {
   const [leavingLeague, setLeavingLeague] = useState(false);
 
   useEffect(() => {
-    if (!leagueId || !league?.tournament_id) return;
+    if (!leagueId) return;
 
-    const tournamentId = league.tournament_id;
+    const tournamentId = league?.tournament_id;
+
+    if (!tournamentId) return;
 
     const interval = window.setInterval(() => {
       loadMatchesOnly(tournamentId);
