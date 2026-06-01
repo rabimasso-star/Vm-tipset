@@ -980,10 +980,10 @@ const groupTables = useMemo<GroupTables>(() => {
   }
 
   function getStatusClass(status: MatchStatus) {
-    if (status === "upcoming") return "bg-blue-500/20 text-blue-300";
-    if (status === "live") return "bg-red-500/20 text-red-300";
-    if (status === "finished") return "bg-emerald-500/20 text-emerald-300";
-    return "bg-slate-700 text-slate-300";
+    if (status === "upcoming") return "bg-gradient-to-r from-emerald-500 to-green-600/20 text-blue-700";
+    if (status === "live") return "bg-red-500/20 text-white/20 text-red-700";
+    if (status === "finished") return "bg-emerald-50 border border-emerald-200 text-emerald-300";
+    return "bg-slate-300 text-slate-300";
   }
 
   function getInviteLink() {
@@ -1040,20 +1040,20 @@ const groupTables = useMemo<GroupTables>(() => {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,.16),transparent_30%),#0f172a] text-white flex items-center justify-center">
         Laddar liga...
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-4 md:p-8">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,.16),transparent_30%),#0f172a] text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <Link href="/dashboard" className="text-emerald-300 hover:underline">
           ← Tillbaka till dashboard
         </Link>
 
-        <div className="mt-6 mb-8 rounded-3xl bg-white/10 border border-white/10 p-6">
+        <div className="mt-6 mb-8 rounded-3xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-amber-500 border border-emerald-200 shadow-md p-6 text-white">
           <p className="text-slate-400 text-sm">
             {league?.tournaments?.name} {league?.tournaments?.year}
           </p>
@@ -1063,7 +1063,7 @@ const groupTables = useMemo<GroupTables>(() => {
           </h1>
 
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="rounded-2xl bg-slate-900/70 px-4 py-3">
+            <div className="rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3">
               <p className="text-xs text-slate-400">Invite code</p>
               <p className="text-emerald-300 font-black">
                 {league?.invite_code}
@@ -1075,7 +1075,7 @@ const groupTables = useMemo<GroupTables>(() => {
               onClick={() =>
                 copyToClipboard(league?.invite_code ?? "", "Invite code")
               }
-              className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-black hover:bg-slate-800"
+              className="rounded-xl bg-slate-900 border border-white/10 px-4 py-3 text-sm font-black hover:bg-slate-700"
             >
               Kopiera kod
             </button>
@@ -1083,7 +1083,7 @@ const groupTables = useMemo<GroupTables>(() => {
             <button
               type="button"
               onClick={() => copyToClipboard(getInviteLink(), "Invite-länk")}
-              className="rounded-xl bg-emerald-500 px-4 py-3 text-sm font-black text-slate-950 hover:bg-emerald-400"
+              className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 text-white py-3 text-sm font-black text-white hover:from-emerald-400 hover:to-green-500"
             >
               Kopiera invite-länk
             </button>
@@ -1091,19 +1091,19 @@ const groupTables = useMemo<GroupTables>(() => {
         </div>
 
         {message && (
-          <div className="mb-6 rounded-2xl bg-slate-900 p-4">{message}</div>
+          <div className="mb-6 rounded-2xl bg-slate-800/90 border border-white/10 p-4">{message}</div>
         )}
 
         <div className="grid lg:grid-cols-[1fr_320px] gap-6">
           <section className="space-y-6">
-            <div className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6">
+            <div className="rounded-3xl bg-slate-800/90 border border-white/10 shadow-sm p-4 md:p-6">
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-black">Bonus-tips</h2>
                 <p className="text-slate-400 text-sm mt-1">
                   Tippa slutplaceringar och skytteligavinnare.
                 </p>
                 {bonusLocked && (
-                  <p className="mt-2 rounded-xl bg-yellow-500/10 px-3 py-2 text-sm font-bold text-yellow-300">
+                  <p className="mt-2 rounded-xl bg-amber-50 border border-amber-100 px-3 py-2 text-sm font-bold text-amber-700">
                     Bonus-tips är låsta eftersom turneringen har startat.
                   </p>
                 )}
@@ -1118,7 +1118,7 @@ const groupTables = useMemo<GroupTables>(() => {
                     onChange={(e) =>
                       updateTournamentPrediction("winner_team", e.target.value)
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -1140,7 +1140,7 @@ const groupTables = useMemo<GroupTables>(() => {
                         e.target.value,
                       )
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -1162,7 +1162,7 @@ const groupTables = useMemo<GroupTables>(() => {
                         e.target.value,
                       )
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -1185,7 +1185,7 @@ const groupTables = useMemo<GroupTables>(() => {
                       updateTournamentPrediction("top_scorer", e.target.value)
                     }
                     placeholder="Ex: Kylian Mbappé"
-                    className="mt-2 w-full rounded-xl bg-slate-900 px-4 py-3 outline-none disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
                   />
                 </div>
               </div>
@@ -1194,7 +1194,7 @@ const groupTables = useMemo<GroupTables>(() => {
                 <button
                   onClick={saveTournamentPrediction}
                   disabled={bonusLocked || !bonusHasChanged || savingBonus}
-                  className="rounded-xl bg-purple-500 px-6 py-3 font-black hover:bg-purple-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                  className="rounded-xl bg-indigo-600 px-6 py-3 font-black hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-400"
                 >
                   {bonusLocked
                     ? "Bonus låst"
@@ -1206,14 +1206,14 @@ const groupTables = useMemo<GroupTables>(() => {
                 </button>
 
                 {!bonusHasChanged && (
-                  <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-black text-emerald-300">
+                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-black text-emerald-300">
                     Uppdaterat
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6">
+            <div className="rounded-3xl bg-slate-800/90 border border-white/10 shadow-sm p-4 md:p-6">
               <button
                 type="button"
                 onClick={() => setShowGroupTables((prev) => !prev)}
@@ -1229,7 +1229,7 @@ const groupTables = useMemo<GroupTables>(() => {
                   </p>
                 </div>
 
-                <span className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold">
+                <span className="rounded-xl bg-slate-900 border border-white/10 px-4 py-2 text-sm font-bold">
                   {showGroupTables ? "Dölj" : "Visa"}
                 </span>
               </button>
@@ -1237,7 +1237,7 @@ const groupTables = useMemo<GroupTables>(() => {
               {showGroupTables && (
                 <div className="mt-6">
                   {groupTableEntries.length === 0 ? (
-                    <div className="rounded-2xl bg-slate-900 p-6 text-slate-300">
+                    <div className="rounded-2xl bg-slate-900 border border-white/10 p-6 text-slate-300">
                       Inga grupptabeller ännu.
                     </div>
                   ) : (
@@ -1245,7 +1245,7 @@ const groupTables = useMemo<GroupTables>(() => {
                       {groupTableEntries.map(([groupLetter, rows]) => (
                         <div
                           key={groupLetter}
-                          className="rounded-2xl bg-slate-900 p-4 md:p-5"
+                          className="rounded-2xl bg-slate-800/90 border border-white/10 p-4 md:p-5 shadow-sm"
                         >
                           <div className="flex items-center justify-between mb-4">
                             <h3 className="text-xl font-black">
@@ -1278,16 +1278,16 @@ const groupTables = useMemo<GroupTables>(() => {
                                   return (
                                     <tr
                                       key={row.team}
-                                      className="border-b border-white/5 last:border-b-0"
+                                      className="border-b border-slate-100 last:border-b-0"
                                     >
                                       <td className="py-2 pr-3">
                                         <span
                                           className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-black ${
                                             qualifiesDirectly
-                                              ? "bg-emerald-500/20 text-emerald-300"
+                                              ? "bg-emerald-50 border border-emerald-200 text-emerald-300"
                                               : isThird
-                                                ? "bg-yellow-500/20 text-yellow-300"
-                                                : "bg-slate-800 text-slate-400"
+                                                ? "bg-amber-50 border border-amber-200 text-amber-700"
+                                                : "bg-slate-900 text-slate-400"
                                           }`}
                                         >
                                           {index + 1}
@@ -1333,7 +1333,7 @@ const groupTables = useMemo<GroupTables>(() => {
               )}
             </div>
 
-            <div className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6">
+            <div className="rounded-3xl bg-slate-800/90 border border-white/10 shadow-sm p-4 md:p-6">
               <div className="w-full flex items-start sm:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-2xl md:text-3xl font-black">
@@ -1350,7 +1350,7 @@ const groupTables = useMemo<GroupTables>(() => {
                       onClick={() => setBracketMode("predictions")}
                       className={`rounded-xl px-4 py-2 text-sm font-black ${
                         bracketMode === "predictions"
-                          ? "bg-white text-slate-950"
+                          ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white"
                           : "bg-slate-900 text-white"
                       }`}
                     >
@@ -1362,7 +1362,7 @@ const groupTables = useMemo<GroupTables>(() => {
                       onClick={() => setBracketMode("actual")}
                       className={`rounded-xl px-4 py-2 text-sm font-black ${
                         bracketMode === "actual"
-                          ? "bg-white text-slate-950"
+                          ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white"
                           : "bg-slate-900 text-white"
                       }`}
                     >
@@ -1374,7 +1374,7 @@ const groupTables = useMemo<GroupTables>(() => {
                 <button
                   type="button"
                   onClick={() => setShowBracket((prev) => !prev)}
-                  className="shrink-0 rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold hover:bg-slate-800"
+                  className="shrink-0 rounded-xl bg-slate-900 border border-white/10 px-4 py-2 text-sm font-bold hover:bg-slate-700"
                 >
                   {showBracket ? "Dölj" : "Visa"}
                 </button>
@@ -1453,19 +1453,19 @@ const groupTables = useMemo<GroupTables>(() => {
 
                       return (
                         <div
-                          className={`rounded-xl bg-slate-900 border border-white/10 ${
+                          className={`rounded-xl bg-slate-800/90 border border-white/10 ${
                             compact ? "p-2" : "p-3"
                           }`}
                         >
-                          <p className="text-[10px] text-slate-500 mb-2">
+                          <p className="text-[10px] text-slate-400 mb-2">
                             Match {matchNumber ?? "-"}
                           </p>
 
                           <div
                             className={`rounded-lg px-2 py-1.5 mb-1.5 flex justify-between gap-2 ${
                               homeIsWinner
-                                ? "bg-emerald-500/20 text-emerald-300 font-black"
-                                : "bg-slate-800 text-white"
+                                ? "bg-emerald-50 border border-emerald-200 text-emerald-300 font-black"
+                                : "bg-slate-900 text-white border border-white/10"
                             }`}
                           >
                             <span className="truncate text-xs">
@@ -1477,8 +1477,8 @@ const groupTables = useMemo<GroupTables>(() => {
                           <div
                             className={`rounded-lg px-2 py-1.5 flex justify-between gap-2 ${
                               awayIsWinner
-                                ? "bg-emerald-500/20 text-emerald-300 font-black"
-                                : "bg-slate-800 text-white"
+                                ? "bg-emerald-50 border border-emerald-200 text-emerald-300 font-black"
+                                : "bg-slate-900 text-white border border-white/10"
                             }`}
                           >
                             <span className="truncate text-xs">
@@ -1517,7 +1517,7 @@ const groupTables = useMemo<GroupTables>(() => {
                             }`}
                           >
                             {matches.length === 0 ? (
-                              <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-500">
+                              <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-400">
                                 Saknas
                               </div>
                             ) : (
@@ -1581,7 +1581,7 @@ const groupTables = useMemo<GroupTables>(() => {
                                     <MatchCard key={match.id} match={match} />
                                   ))
                                 ) : (
-                                  <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-500">
+                                  <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-400">
                                     Final saknas
                                   </div>
                                 )}
@@ -1596,7 +1596,7 @@ const groupTables = useMemo<GroupTables>(() => {
                                     <MatchCard key={match.id} match={match} />
                                   ))
                                 ) : (
-                                  <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-500">
+                                  <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-400">
                                     Bronsmatch saknas
                                   </div>
                                 )}
@@ -1638,7 +1638,7 @@ const groupTables = useMemo<GroupTables>(() => {
             
             </div>
 
-            <div className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6">
+            <div className="rounded-3xl bg-slate-800/90 border border-white/10 shadow-sm p-4 md:p-6">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                 <div>
                   <h2 className="text-2xl md:text-3xl font-black">
@@ -1660,7 +1660,7 @@ const groupTables = useMemo<GroupTables>(() => {
                       onClick={() => setFilter(key as Filter)}
                       className={`rounded-xl px-4 py-2 text-sm font-bold ${
                         filter === key
-                          ? "bg-white text-slate-950"
+                          ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white"
                           : "bg-slate-900 text-white"
                       }`}
                     >
@@ -1671,7 +1671,7 @@ const groupTables = useMemo<GroupTables>(() => {
               </div>
 
               {filteredMatches.length === 0 ? (
-                <div className="rounded-2xl bg-slate-900 p-6 text-slate-300">
+                <div className="rounded-2xl bg-slate-900 border border-white/10 p-6 text-slate-300">
                   Inga matcher hittades för denna liga.
                 </div>
               ) : (
@@ -1701,7 +1701,7 @@ const groupTables = useMemo<GroupTables>(() => {
                     return (
                       <div
                         key={match.id}
-                        className="rounded-2xl bg-slate-900 p-4 md:p-5"
+                        className="rounded-2xl bg-slate-800/90 border border-white/10 p-4 md:p-5 shadow-sm"
                       >
                         <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
                           <div>
@@ -1742,7 +1742,7 @@ const groupTables = useMemo<GroupTables>(() => {
 
                             {currentPrediction?.home !== undefined &&
                               currentPrediction?.away !== undefined && (
-                                <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3 text-sm">
+                                <div className="rounded-2xl border border-white/10 bg-slate-800/90 p-3 text-sm">
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span className="text-slate-400">
                                       Ditt tips:
@@ -1753,11 +1753,11 @@ const groupTables = useMemo<GroupTables>(() => {
                                     </span>
 
                                     {matchPoint ? (
-                                      <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-black text-emerald-300">
+                                      <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-black text-emerald-300">
                                         +{matchPoint.total_points ?? 0} poäng
                                       </span>
                                     ) : (
-                                      <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-black text-slate-300">
+                                      <span className="rounded-full bg-slate-900 border border-white/10 px-3 py-1 text-xs font-black text-slate-300">
                                         Poäng räknas...
                                       </span>
                                     )}
@@ -1800,7 +1800,7 @@ const groupTables = useMemo<GroupTables>(() => {
                                   e.target.value,
                                 )
                               }
-                              className="w-20 rounded-xl bg-slate-800 px-3 py-2 disabled:opacity-40"
+                              className="w-20 rounded-xl bg-slate-900 border border-white/10 px-3 py-2 disabled:opacity-40"
                             />
 
                             <input
@@ -1814,13 +1814,13 @@ const groupTables = useMemo<GroupTables>(() => {
                                   e.target.value,
                                 )
                               }
-                              className="w-20 rounded-xl bg-slate-800 px-3 py-2 disabled:opacity-40"
+                              className="w-20 rounded-xl bg-slate-900 border border-white/10 px-3 py-2 disabled:opacity-40"
                             />
 
                             <button
                               disabled={isLocked || savingPredictionId === match.id}
                               onClick={() => savePrediction(match)}
-                              className="rounded-xl bg-emerald-500 px-5 font-bold disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                              className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-5 text-white font-bold disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-400"
                             >
                               {savingPredictionId === match.id
                                 ? "Sparar..."
@@ -1845,7 +1845,7 @@ const groupTables = useMemo<GroupTables>(() => {
                                     e.target.value,
                                   )
                                 }
-                                className="mt-2 w-full max-w-md rounded-xl bg-slate-800 px-4 py-3 outline-none disabled:opacity-40"
+                                className="mt-2 w-full max-w-md rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:opacity-40"
                               >
                                 <option value="">Välj vinnare</option>
                                 <option value={homeDisplayName}>
@@ -1866,7 +1866,7 @@ const groupTables = useMemo<GroupTables>(() => {
             </div>
           </section>
         
-          <aside className="rounded-3xl bg-white/10 border border-white/10 p-4 md:p-6 h-fit">
+          <aside className="rounded-3xl bg-slate-800/90 border border-white/10 shadow-sm p-4 md:p-6 h-fit">
             <div className="mb-6 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-2xl md:text-3xl font-black">Leaderboard</h2>
@@ -1877,7 +1877,7 @@ const groupTables = useMemo<GroupTables>(() => {
             </div>
 
             {leaderboard.length === 0 ? (
-              <div className="rounded-2xl bg-slate-900 p-5 text-slate-300">
+              <div className="rounded-2xl bg-slate-900 border border-white/10 p-5 text-slate-300">
                 Inga poäng ännu.
               </div>
             ) : (
@@ -1889,8 +1889,8 @@ const groupTables = useMemo<GroupTables>(() => {
                     key={row.user_id}
                     className={`rounded-2xl p-4 flex justify-between mb-3 border ${
                       isCurrentUser
-                        ? "bg-emerald-500/10 border-emerald-500/30"
-                        : "bg-slate-900 border-transparent"
+                        ? "bg-gradient-to-r from-emerald-500 to-green-600/10 border-emerald-500/30"
+                        : "bg-slate-800/90 border-white/10"
                     }`}
                   >
                     <span className="font-bold">
@@ -1914,7 +1914,7 @@ const groupTables = useMemo<GroupTables>(() => {
               type="button"
               onClick={leaveLeague}
               disabled={leavingLeague}
-              className="mt-4 w-full rounded-xl bg-red-500/10 px-4 py-3 text-sm font-black text-red-300 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-4 w-full rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {leavingLeague ? "Lämnar..." : "Lämna liga"}
             </button>
