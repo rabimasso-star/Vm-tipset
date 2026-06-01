@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/sync-results?secret=Crunch84!",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/lock-predictions?secret=Crunch84!",
