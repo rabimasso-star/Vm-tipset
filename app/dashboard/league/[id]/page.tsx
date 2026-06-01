@@ -134,16 +134,12 @@ export default function LeaguePage() {
   const [leavingLeague, setLeavingLeague] = useState(false);
 
   useEffect(() => {
-    if (leagueId) {
-      loadLeaguePage();
-    }
-  }, [leagueId]);
-
-  useEffect(() => {
     if (!leagueId || !league?.tournament_id) return;
 
+    const tournamentId = league.tournament_id;
+
     const interval = window.setInterval(() => {
-      loadMatchesOnly(league.tournament_id);
+      loadMatchesOnly(tournamentId);
       loadLeaderboardOnly();
       loadMatchPointsOnly();
     }, 3000);
@@ -1048,7 +1044,7 @@ const groupTables = useMemo<GroupTables>(() => {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,.16),transparent_30%),#0f172a] text-white p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <Link href="/dashboard" className="text-emerald-300 hover:underline">
           ← Tillbaka till dashboard
         </Link>
