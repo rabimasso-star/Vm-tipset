@@ -224,7 +224,6 @@ const groupTables = useMemo<GroupTables>(() => {
 
   matches.forEach((match) => {
     if (match.round !== "Group Stage") return;
-    if (match.status !== "finished") return;
 
     const groupLetter = getMatchGroup(match);
     if (!groupLetter) return;
@@ -261,6 +260,7 @@ const groupTables = useMemo<GroupTables>(() => {
     }
 
     if (
+      match.status !== "finished" ||
       match.home_goals === null ||
       match.away_goals === null
     ) {
@@ -1231,7 +1231,7 @@ const groupTables = useMemo<GroupTables>(() => {
                     Grupptabeller
                   </h2>
                   <p className="text-slate-400 text-sm mt-1">
-                    Tabellerna räknas automatiskt ut från dina tips i
+                    Tabellerna uppdateras automatiskt från faktiska resultat i
                     gruppspelet.
                   </p>
                 </div>
