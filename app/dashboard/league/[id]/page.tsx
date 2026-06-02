@@ -107,9 +107,6 @@ export default function LeaguePage() {
   const [matchPointsById, setMatchPointsById] = useState<MatchPointsById>({});
   const [showGroupTables, setShowGroupTables] = useState(false);
   const [showBracket, setShowBracket] = useState(false);
-  const [bracketMode, setBracketMode] = useState<"predictions" | "actual">(
-  "predictions",
-  );
   const [tournamentPrediction, setTournamentPrediction] =
     useState<TournamentPrediction>({
       winner_team: "",
@@ -428,88 +425,83 @@ const groupTables = useMemo<GroupTables>(() => {
     return resolveGroupPlaceholder(trimmedName);
   }
 
-  const knockoutResults = useMemo<Record<number, KnockoutResult>>(() => {
-  const results: Record<number, KnockoutResult> = {};
+  const computeKnockoutResults = (
+    mode: "predictions" | "actual",
+  ): Record<number, KnockoutResult> => {
+    const results: Record<number, KnockoutResult> = {};
 
-  const knockoutMatches = matches
-    .filter((match) => match.round !== "Group Stage")
-    .sort((a, b) => {
-      const aNumber = getMatchNumber(a) ?? 0;
-      const bNumber = getMatchNumber(b) ?? 0;
-      return aNumber - bNumber;
+    const knockoutMatches = matches
+      .filter((match) => match.round !== "Group Stage")
+      .sort((a, b) => (getMatchNumber(a) ?? 0) - (getMatchNumber(b) ?? 0));
+
+    knockoutMatches.forEach((match) => {
+      const matchNumber = getMatchNumber(match);
+      if (!matchNumber) return;
+
+      const homeNameRaw = match.home_team?.name;
+      const awayNameRaw = match.away_team?.name;
+
+      if (!homeNameRaw || !awayNameRaw) return;
+
+      const homeName = resolveTeamNameWithResults(homeNameRaw, results);
+      const awayName = resolveTeamNameWithResults(awayNameRaw, results);
+
+      if (!homeName || !awayName) return;
+
+      let homeGoals: number | null = null;
+      let awayGoals: number | null = null;
+      let winnerTeam = "";
+
+      if (mode === "actual") {
+        if (match.status !== "finished") return;
+        if (match.home_goals === null || match.away_goals === null) return;
+
+        homeGoals = Number(match.home_goals);
+        awayGoals = Number(match.away_goals);
+      } else {
+        const prediction = getPrediction(match.id);
+        if (!prediction) return;
+
+        homeGoals = prediction.home;
+        awayGoals = prediction.away;
+        winnerTeam = prediction.winnerTeam;
+      }
+
+      if (homeGoals > awayGoals) {
+        results[matchNumber] = { winner: homeName, loser: awayName };
+        return;
+      }
+
+      if (homeGoals < awayGoals) {
+        results[matchNumber] = { winner: awayName, loser: homeName };
+        return;
+      }
+
+      if (winnerTeam) {
+        const winner = winnerTeam === homeName ? homeName : awayName;
+        const loser = winner === homeName ? awayName : homeName;
+        results[matchNumber] = { winner, loser };
+      }
     });
 
-  knockoutMatches.forEach((match) => {
-    const matchNumber = getMatchNumber(match);
-    if (!matchNumber) return;
+    return results;
+  };
 
-    const homeNameRaw = match.home_team?.name;
-    const awayNameRaw = match.away_team?.name;
+  // Two independent views of the bracket: where the user's tips send each team,
+  // and what actually happened. Both are shown side by side in each slot.
+  const predictionResults = useMemo(
+    () => computeKnockoutResults("predictions"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [matches, predictionInputs, groupTables, bestThirdPlacedTeams],
+  );
 
-    if (!homeNameRaw || !awayNameRaw) return;
+  const actualResults = useMemo(
+    () => computeKnockoutResults("actual"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [matches, groupTables, bestThirdPlacedTeams],
+  );
 
-    const homeName = resolveTeamNameWithResults(homeNameRaw, results);
-    const awayName = resolveTeamNameWithResults(awayNameRaw, results);
-
-    if (!homeName || !awayName) return;
-
-    let homeGoals: number | null = null;
-    let awayGoals: number | null = null;
-    let winnerTeam = "";
-
-    if (bracketMode === "actual") {
-      if (match.status !== "finished") return;
-      if (match.home_goals === null || match.away_goals === null) return;
-
-      homeGoals = Number(match.home_goals);
-      awayGoals = Number(match.away_goals);
-    } else {
-      const prediction = getPrediction(match.id);
-      if (!prediction) return;
-
-      homeGoals = prediction.home;
-      awayGoals = prediction.away;
-      winnerTeam = prediction.winnerTeam;
-    }
-
-    if (homeGoals > awayGoals) {
-      results[matchNumber] = {
-        winner: homeName,
-        loser: awayName,
-      };
-      return;
-    }
-
-    if (homeGoals < awayGoals) {
-      results[matchNumber] = {
-        winner: awayName,
-        loser: homeName,
-      };
-      return;
-    }
-
-    if (winnerTeam) {
-      const winner =
-        winnerTeam === homeName ? homeName : awayName;
-
-      const loser =
-        winner === homeName ? awayName : homeName;
-
-      results[matchNumber] = {
-        winner,
-        loser,
-      };
-    }
-  });
-
-  return results;
-}, [
-  matches,
-  predictionInputs,
-  groupTables,
-  bestThirdPlacedTeams,
-  bracketMode,
-]);
+  const knockoutResults = predictionResults;
 
   const bracketRounds = useMemo(() => {
     const roundOrder = [
@@ -530,18 +522,7 @@ const groupTables = useMemo<GroupTables>(() => {
     return roundOrder
       .map((roundName) => {
         const roundMatches = matches
-          .filter((match) => {
-            if (match.round !== roundName) return false;
-
-            if (bracketMode === "actual") {
-              return true;
-            }
-
-            return (
-              predictionInputs[match.id]?.home !== "" &&
-              predictionInputs[match.id]?.away !== ""
-            );
-          })
+          .filter((match) => match.round === roundName)
           .sort((a, b) => {
             const aNumber = getMatchNumber(a) ?? 0;
             const bNumber = getMatchNumber(b) ?? 0;
@@ -554,7 +535,7 @@ const groupTables = useMemo<GroupTables>(() => {
         };
       })
       .filter((round) => round.matches.length > 0);
-  }, [matches, knockoutResults, bracketMode, predictionInputs]);
+  }, [matches]);
 
   function resolveTeamName(name?: string | null): string {
     return resolveTeamNameWithResults(name, knockoutResults);
@@ -1348,34 +1329,10 @@ const groupTables = useMemo<GroupTables>(() => {
                   </h2>
 
                   <p className="text-slate-400 text-sm mt-1">
-                    Uppdateras automatiskt baserat på dina tips.
+                    Lagen dina tips skickar vidare, med{" "}
+                    <span className="text-emerald-300 font-bold">facit</span>{" "}
+                    (verkligt resultat) under varje lag när matcherna spelats.
                   </p>
-
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setBracketMode("predictions")}
-                      className={`rounded-xl px-4 py-2 text-sm font-black ${
-                        bracketMode === "predictions"
-                          ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white"
-                          : "bg-slate-900 text-white"
-                      }`}
-                    >
-                      Mina tips
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setBracketMode("actual")}
-                      className={`rounded-xl px-4 py-2 text-sm font-black ${
-                        bracketMode === "actual"
-                          ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white"
-                          : "bg-slate-900 text-white"
-                      }`}
-                    >
-                      Resultat
-                    </button>
-                  </div>
                 </div>
 
                 <button
@@ -1424,74 +1381,107 @@ const groupTables = useMemo<GroupTables>(() => {
                     const [quartersLeft, quartersRight] = split(quarters);
                     const [semisLeft, semisRight] = split(semis);
 
-                    function MatchCard({
-                      match,
-                      compact = false,
+                    function TeamSlot({
+                      predicted,
+                      actual,
+                      isPredWinner,
                     }: {
-                      match: Match;
-                      compact?: boolean;
+                      predicted: string;
+                      actual: string;
+                      isPredWinner: boolean;
                     }) {
-                      const homeDisplayName = resolveTeamName(
-                        match.home_team?.name,
-                      );
-                      const awayDisplayName = resolveTeamName(
-                        match.away_team?.name,
-                      );
-
-                      const visibleHomeName =
-                        homeDisplayName && !isPlaceholderTeam(homeDisplayName)
-                          ? homeDisplayName
+                      const predName =
+                        predicted && !isPlaceholderTeam(predicted)
+                          ? predicted
                           : "";
-
-                      const visibleAwayName =
-                        awayDisplayName && !isPlaceholderTeam(awayDisplayName)
-                          ? awayDisplayName
-                          : "";
-
-                      const matchNumber = getMatchNumber(match);
-                      const result = matchNumber
-                        ? knockoutResults[matchNumber]
-                        : null;
-
-                      const homeIsWinner =
-                        visibleHomeName && result?.winner === visibleHomeName;
-                      const awayIsWinner =
-                        visibleAwayName && result?.winner === visibleAwayName;
+                      const actName =
+                        actual && !isPlaceholderTeam(actual) ? actual : "";
+                      const showActual = actName !== "";
+                      const correct = showActual && actName === predName;
 
                       return (
                         <div
-                          className={`rounded-xl bg-slate-800/90 border border-white/10 ${
-                            compact ? "p-2" : "p-3"
+                          className={`rounded-md px-1.5 py-1 border ${
+                            isPredWinner
+                              ? "bg-emerald-500/20 border-emerald-400/40"
+                              : "bg-slate-900 border-white/10"
                           }`}
                         >
-                          <p className="text-[10px] text-slate-400 mb-2">
+                          <div className="flex items-center justify-between gap-1">
+                            <span
+                              className={`truncate text-[11px] ${
+                                isPredWinner
+                                  ? "text-emerald-200 font-black"
+                                  : "text-white"
+                              }`}
+                            >
+                              {predName || " "}
+                            </span>
+                            {isPredWinner && (
+                              <span className="text-[10px] text-emerald-300">
+                                ✓
+                              </span>
+                            )}
+                          </div>
+
+                          {showActual && (
+                            <div
+                              className={`truncate text-[9px] mt-0.5 ${
+                                correct ? "text-emerald-300" : "text-amber-300"
+                              }`}
+                            >
+                              facit: {actName}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+
+                    function MatchCard({ match }: { match: Match }) {
+                      const matchNumber = getMatchNumber(match);
+
+                      const predHome = resolveTeamNameWithResults(
+                        match.home_team?.name,
+                        predictionResults,
+                      );
+                      const predAway = resolveTeamNameWithResults(
+                        match.away_team?.name,
+                        predictionResults,
+                      );
+                      const actHome = resolveTeamNameWithResults(
+                        match.home_team?.name,
+                        actualResults,
+                      );
+                      const actAway = resolveTeamNameWithResults(
+                        match.away_team?.name,
+                        actualResults,
+                      );
+
+                      const predWinner = matchNumber
+                        ? predictionResults[matchNumber]?.winner
+                        : undefined;
+
+                      return (
+                        <div className="rounded-lg bg-slate-800/90 border border-white/10 p-1.5">
+                          <p className="text-[9px] text-slate-500 mb-1">
                             Match {matchNumber ?? "-"}
                           </p>
 
-                          <div
-                            className={`rounded-lg px-2 py-1.5 mb-1.5 flex justify-between gap-2 ${
-                              homeIsWinner
-                                ? "bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-black"
-                                : "bg-slate-900 text-white border border-white/10"
-                            }`}
-                          >
-                            <span className="truncate text-xs">
-                              {visibleHomeName || "\u00A0"}
-                            </span>
-                            {homeIsWinner && <span className="text-xs">✓</span>}
-                          </div>
-
-                          <div
-                            className={`rounded-lg px-2 py-1.5 flex justify-between gap-2 ${
-                              awayIsWinner
-                                ? "bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-black"
-                                : "bg-slate-900 text-white border border-white/10"
-                            }`}
-                          >
-                            <span className="truncate text-xs">
-                              {visibleAwayName || "\u00A0"}
-                            </span>
-                            {awayIsWinner && <span className="text-xs">✓</span>}
+                          <div className="space-y-1">
+                            <TeamSlot
+                              predicted={predHome}
+                              actual={actHome}
+                              isPredWinner={
+                                !!predWinner && predWinner === predHome
+                              }
+                            />
+                            <TeamSlot
+                              predicted={predAway}
+                              actual={actAway}
+                              isPredWinner={
+                                !!predWinner && predWinner === predAway
+                              }
+                            />
                           </div>
                         </div>
                       );
@@ -1501,21 +1491,19 @@ const groupTables = useMemo<GroupTables>(() => {
                       title,
                       matches,
                       align = "start",
-                      compact = false,
                     }: {
                       title: string;
                       matches: Match[];
                       align?: "start" | "center" | "end";
-                      compact?: boolean;
                     }) {
                       return (
-                        <div className="w-44 shrink-0">
-                          <h3 className="text-center text-xs font-black text-slate-300 mb-3">
+                        <div className="w-32 shrink-0">
+                          <h3 className="text-center text-[11px] font-black text-slate-300 mb-2">
                             {title}
                           </h3>
 
                           <div
-                            className={`flex flex-col gap-3 ${
+                            className={`flex flex-col gap-2 ${
                               align === "center"
                                 ? "justify-center"
                                 : align === "end"
@@ -1524,16 +1512,12 @@ const groupTables = useMemo<GroupTables>(() => {
                             }`}
                           >
                             {matches.length === 0 ? (
-                              <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-400">
+                              <div className="rounded-lg border border-dashed border-white/10 p-2 text-center text-[10px] text-slate-400">
                                 Saknas
                               </div>
                             ) : (
                               matches.map((match) => (
-                                <MatchCard
-                                  key={match.id}
-                                  match={match}
-                                  compact={compact}
-                                />
+                                <MatchCard key={match.id} match={match} />
                               ))
                             )}
                           </div>
@@ -1542,26 +1526,23 @@ const groupTables = useMemo<GroupTables>(() => {
                     }
 
                     return (
-                      <div className="min-w-[1600px]">
-                        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_260px_1fr_1fr_1fr_1fr] gap-4 items-center">
+                      <div className="min-w-[1180px]">
+                        <div className="grid grid-cols-[1fr_1fr_1fr_1fr_190px_1fr_1fr_1fr_1fr] gap-2 items-center">
                           <RoundColumn
                             title="Round of 32"
                             matches={round32Left}
-                            compact
                           />
 
                           <RoundColumn
                             title="Round of 16"
                             matches={round16Left}
                             align="center"
-                            compact
                           />
 
                           <RoundColumn
                             title="Kvartsfinaler"
                             matches={quartersLeft}
                             align="center"
-                            compact
                           />
 
                           <RoundColumn
@@ -1570,17 +1551,17 @@ const groupTables = useMemo<GroupTables>(() => {
                             align="center"
                           />
 
-                          <div className="w-64 shrink-0">
-                            <div className="text-center mb-4">
-                              <div className="text-4xl mb-2">🏆</div>
-                              <h3 className="text-sm font-black text-white">
+                          <div className="w-[190px] shrink-0">
+                            <div className="text-center mb-3">
+                              <div className="text-3xl mb-1">🏆</div>
+                              <h3 className="text-xs font-black text-white">
                                 Final & 3:e pris
                               </h3>
                             </div>
 
-                            <div className="space-y-5">
+                            <div className="space-y-4">
                               <div>
-                                <h4 className="text-center text-xs font-black text-slate-300 mb-3">
+                                <h4 className="text-center text-[11px] font-black text-slate-300 mb-2">
                                   Final
                                 </h4>
                                 {finals.length > 0 ? (
@@ -1588,14 +1569,14 @@ const groupTables = useMemo<GroupTables>(() => {
                                     <MatchCard key={match.id} match={match} />
                                   ))
                                 ) : (
-                                  <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-400">
+                                  <div className="rounded-lg border border-dashed border-white/10 p-2 text-center text-[10px] text-slate-400">
                                     Final saknas
                                   </div>
                                 )}
                               </div>
 
                               <div>
-                                <h4 className="text-center text-xs font-black text-slate-300 mb-3">
+                                <h4 className="text-center text-[11px] font-black text-slate-300 mb-2">
                                   3:e pris
                                 </h4>
                                 {thirdPlace.length > 0 ? (
@@ -1603,7 +1584,7 @@ const groupTables = useMemo<GroupTables>(() => {
                                     <MatchCard key={match.id} match={match} />
                                   ))
                                 ) : (
-                                  <div className="rounded-xl border border-dashed border-white/10 p-3 text-center text-xs text-slate-400">
+                                  <div className="rounded-lg border border-dashed border-white/10 p-2 text-center text-[10px] text-slate-400">
                                     Bronsmatch saknas
                                   </div>
                                 )}
@@ -1621,20 +1602,17 @@ const groupTables = useMemo<GroupTables>(() => {
                             title="Kvartsfinaler"
                             matches={quartersRight}
                             align="center"
-                            compact
                           />
 
                           <RoundColumn
                             title="Round of 16"
                             matches={round16Right}
                             align="center"
-                            compact
                           />
 
                           <RoundColumn
                             title="Round of 32"
                             matches={round32Right}
-                            compact
                           />
                         </div>
                       </div>
