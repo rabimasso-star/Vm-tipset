@@ -134,10 +134,13 @@ export default function LeaguePage() {
   const [leavingLeague, setLeavingLeague] = useState(false);
 
   useEffect(() => {
-    if (!leagueId) return;
+  if (!leagueId) return;
 
-    loadLeaguePage();
+  loadLeaguePage();
   }, [leagueId]);
+
+  useEffect(() => {
+    if (!leagueId) return;
 
     const tournamentId = league?.tournament_id;
 
