@@ -136,6 +136,9 @@ export default function LeaguePage() {
   useEffect(() => {
     if (!leagueId) return;
 
+    loadLeaguePage();
+  }, [leagueId]);
+
     const tournamentId = league?.tournament_id;
 
     if (!tournamentId) return;
