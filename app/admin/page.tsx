@@ -198,51 +198,18 @@ export default function AdminPage() {
     );
   }
 
-  async function callSupabaseFunction(functionName: string, body: object) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !anonKey) {
-      throw new Error("Saknar Supabase env.");
-    }
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${anonKey}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.error ?? `Kunde inte köra ${functionName}.`);
-    }
-
-    return result;
-  }
-
-  async function recalculateLeaguePoints(matchId: string) {
-    return callSupabaseFunction("recalculate-league-points", { matchId });
-  }
-
   async function saveMatch(match: Match) {
     setMessage("");
     setSavingMatchId(match.id);
 
-    const payload = {
-      home_goals: match.home_goals,
-      away_goals: match.away_goals,
-      status: match.status,
-    };
-    
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("matches")
-      .update(payload)
-      .eq("id", match.id)
-      .select();
+      .update({
+        home_goals: match.home_goals,
+        away_goals: match.away_goals,
+        status: match.status,
+      })
+      .eq("id", match.id);
 
     if (error) {
       setMessage(`Fel vid sparning: ${error.message}`);
@@ -250,27 +217,15 @@ export default function AdminPage() {
       return;
     }
 
-    try {
-      if (match.status === "finished") {
-        await recalculateLeaguePoints(match.id);
-
-        setMessage(
-          `Match sparad och poäng omräknade! Resultat: ${
+    // A database trigger recalculates league points automatically whenever a
+    // match's status/goals change to "finished" — no extra call needed.
+    setMessage(
+      match.status === "finished"
+        ? `Match sparad! Poäng räknas om automatiskt. Resultat: ${
             match.home_goals ?? "-"
           } - ${match.away_goals ?? "-"}`
-        );
-      } else {
-        setMessage("Match sparad!");
-      }
-    } catch (recalculateError) {
-      setMessage(
-        `Match sparad, men poängräkning misslyckades: ${
-          recalculateError instanceof Error
-            ? recalculateError.message
-            : "Okänt fel"
-        }`
-      );
-    }
+        : "Match sparad!"
+    );
 
     setSavingMatchId(null);
   }
