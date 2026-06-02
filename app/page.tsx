@@ -56,6 +56,15 @@ export default function Home() {
       return;
     }
 
+    // If they arrived via an invite link while logged out, send them back to it.
+    const pendingInvite = window.localStorage.getItem("vmtipset:pendingInvite");
+
+    if (pendingInvite) {
+      window.localStorage.removeItem("vmtipset:pendingInvite");
+      window.location.href = `/join/${pendingInvite}`;
+      return;
+    }
+
     window.location.href = "/dashboard";
   }
 

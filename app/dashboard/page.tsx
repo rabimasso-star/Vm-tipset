@@ -88,46 +88,27 @@ export default function DashboardPage() {
       return;
     }
 
-    const { data: league, error: leagueError } = await supabase
-      .from("leagues")
-      .select("id, invite_code")
-      .ilike("invite_code", cleanCode)
-      .maybeSingle();
-
-    if (leagueError) {
-      setMessage(leagueError.message);
-      setJoining(false);
-      return;
-    }
-
-    if (!league) {
-      setMessage("Ligakod hittades inte.");
-      setJoining(false);
-      return;
-    }
-
-    const { error } = await supabase.from("league_members").insert({
-      league_id: league.id,
-      user_id: user.id,
-      role: "member",
+    // RLS hides leagues you aren't a member of, so join via a SECURITY DEFINER
+    // function that looks up the code and adds you (idempotent on re-join).
+    const { data, error } = await supabase.rpc("join_league_by_code", {
+      invite_code_input: cleanCode,
     });
 
     if (error) {
-      const isDuplicate =
-        error.code === "23505" ||
-        error.message.toLowerCase().includes("duplicate");
-
-      if (isDuplicate) {
-        window.location.href = `/dashboard/league/${league.id}`;
-        return;
-      }
-
       setMessage(error.message);
       setJoining(false);
       return;
     }
 
-    window.location.href = `/dashboard/league/${league.id}`;
+    const joined = Array.isArray(data) ? data[0] : data;
+
+    if (!joined?.league_id) {
+      setMessage("Ligakod hittades inte.");
+      setJoining(false);
+      return;
+    }
+
+    window.location.href = `/dashboard/league/${joined.league_id}`;
   }
 
   async function logout() {
