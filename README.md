@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VM-tipset
 
-## Getting Started
+A football prediction game (in Swedish) for the 2026 World Cup. Friends create
+private leagues, predict match scores, and compete on a live leaderboard with
+auto-calculated group tables and a knockout bracket that resolves from their
+own predictions.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS v4**
+- **Supabase** — Postgres, Auth, Row-Level Security, and Edge Functions (Deno)
+- **API-Football** (api-sports.io) for fixtures and results
+- Deployed on **Vercel** (with cron jobs)
+
+> Note: this repo pins a Next.js version whose APIs may differ from older
+> releases. See `AGENTS.md` — when in doubt, read `node_modules/next/dist/docs/`.
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local   # then fill in real values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+See `.env.example` for the full list of required environment variables
+(Supabase keys, API-Football key, `CRON_SECRET`, admin email).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Database
 
-## Learn More
+The full schema is version-controlled under `supabase/migrations/`:
 
-To learn more about Next.js, take a look at the following resources:
+- `20260601000000_baseline_schema.sql` — tables, enums, constraints, indexes,
+  the scoring functions, the `leaderboard` view, triggers, RLS policies, grants.
+- `20260602000000_*` / `20260602010000_*` — the `join_league_by_code` function
+  used by invite links.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Apply migrations to a linked Supabase project:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npx supabase db push
+```
 
-## Deploy on Vercel
+Scoring, point recalculation, and prediction locking live in Postgres functions
+(`calculate_prediction_points`, `recalculate_points_for_match`,
+`lock_predictions_for_started_matches`, ...). New auth signups get a `profiles`
+row via the `on_auth_user_created` trigger.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Edge Functions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deno functions under `supabase/functions/` (`import-matches`, `lock-predictions`,
+`recalculate-league-points`, `refresh-leaderboard`, `sync-world-cup-results`).
+Their env vars are set with `supabase secrets set` — see `.env.example`.
+
+## Scheduled jobs
+
+`vercel.json` defines daily cron jobs that call:
+
+- `/api/sync-results` — pulls fixtures/results from API-Football into `matches`.
+- `/api/lock-predictions` — locks predictions for matches that have kicked off.
+
+Both authenticate via `Authorization: Bearer $CRON_SECRET`. Set `CRON_SECRET`
+in the Vercel project env vars; Vercel adds that header to cron requests
+automatically.
+
+## Project structure
+
+```
+app/
+  page.tsx                     Login / register
+  dashboard/                   Leagues overview, join by code
+  dashboard/league/[id]/       League view: predictions, tables, bracket, leaderboard
+  join/[code]/                 Invite-link landing -> joins the league
+  tournaments/                 Browse tournaments, create a league
+  admin/                       Match / CSV import tools
+  api/sync-results/            Cron: sync results from API-Football
+  api/lock-predictions/        Cron: lock started matches
+  lib/supabaseClient.ts        Browser Supabase client
+supabase/
+  migrations/                  Versioned database schema
+  functions/                   Deno edge functions
+```
+
+## Scripts
+
+- `npm run dev` — start the dev server
+- `npm run build` — production build
+- `npm run start` — serve the production build
+- `npm run lint` — ESLint
