@@ -984,10 +984,13 @@ const groupTables = useMemo<GroupTables>(() => {
   }
 
   function getStatusClass(status: MatchStatus) {
-    if (status === "upcoming") return "bg-gradient-to-r from-emerald-500 to-green-600/20 text-blue-700";
-    if (status === "live") return "bg-red-500/20 text-white/20 text-red-700";
-    if (status === "finished") return "bg-emerald-50 border border-emerald-200 text-emerald-300";
-    return "bg-slate-300 text-slate-300";
+    if (status === "upcoming")
+      return "bg-blue-500/15 border border-blue-400/30 text-blue-200";
+    if (status === "live")
+      return "bg-red-500/20 border border-red-400/30 text-red-200";
+    if (status === "finished")
+      return "bg-emerald-500/15 border border-emerald-400/30 text-emerald-300";
+    return "bg-slate-600/40 border border-white/10 text-slate-300";
   }
 
   function getInviteLink() {
@@ -1044,21 +1047,21 @@ const groupTables = useMemo<GroupTables>(() => {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,.16),transparent_30%),#0f172a] text-white flex items-center justify-center">
+      <main className="min-h-screen text-white flex items-center justify-center">
         Laddar liga...
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,.16),transparent_30%),#0f172a] text-white p-4 md:p-8">
+    <main className="min-h-screen text-white p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <Link href="/dashboard" className="text-emerald-300 hover:underline">
           ← Tillbaka till dashboard
         </Link>
 
-        <div className="mt-6 mb-8 rounded-3xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-amber-500 border border-emerald-200 shadow-md p-6 text-white">
-          <p className="text-slate-400 text-sm">
+        <div className="mt-6 mb-8 rounded-3xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-amber-500 border border-white/10 shadow-lg shadow-black/20 p-6 text-white">
+          <p className="text-white/70 text-sm">
             {league?.tournaments?.name} {league?.tournaments?.year}
           </p>
 
@@ -1067,9 +1070,9 @@ const groupTables = useMemo<GroupTables>(() => {
           </h1>
 
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3">
-              <p className="text-xs text-slate-400">Invite code</p>
-              <p className="text-emerald-300 font-black">
+            <div className="rounded-2xl bg-black/20 border border-white/15 px-4 py-3">
+              <p className="text-xs text-white/70">Invite code</p>
+              <p className="text-white font-black">
                 {league?.invite_code}
               </p>
             </div>
@@ -1079,7 +1082,7 @@ const groupTables = useMemo<GroupTables>(() => {
               onClick={() =>
                 copyToClipboard(league?.invite_code ?? "", "Invite code")
               }
-              className="rounded-xl bg-slate-900 border border-white/10 px-4 py-3 text-sm font-black hover:bg-slate-700"
+              className="rounded-xl bg-black/20 border border-white/15 px-4 py-3 text-sm font-black hover:bg-black/30"
             >
               Kopiera kod
             </button>
@@ -1107,7 +1110,7 @@ const groupTables = useMemo<GroupTables>(() => {
                   Tippa slutplaceringar och skytteligavinnare.
                 </p>
                 {bonusLocked && (
-                  <p className="mt-2 rounded-xl bg-amber-50 border border-amber-100 px-3 py-2 text-sm font-bold text-amber-700">
+                  <p className="mt-2 rounded-xl bg-amber-500/15 border border-amber-400/30 px-3 py-2 text-sm font-bold text-amber-200">
                     Bonus-tips är låsta eftersom turneringen har startat.
                   </p>
                 )}
@@ -1122,7 +1125,7 @@ const groupTables = useMemo<GroupTables>(() => {
                     onChange={(e) =>
                       updateTournamentPrediction("winner_team", e.target.value)
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -1144,7 +1147,7 @@ const groupTables = useMemo<GroupTables>(() => {
                         e.target.value,
                       )
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -1166,7 +1169,7 @@ const groupTables = useMemo<GroupTables>(() => {
                         e.target.value,
                       )
                     }
-                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <option value="">Välj lag</option>
                     {teamOptions.map((team) => (
@@ -1189,7 +1192,7 @@ const groupTables = useMemo<GroupTables>(() => {
                       updateTournamentPrediction("top_scorer", e.target.value)
                     }
                     placeholder="Ex: Kylian Mbappé"
-                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-2 w-full rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-40"
                   />
                 </div>
               </div>
@@ -1198,7 +1201,7 @@ const groupTables = useMemo<GroupTables>(() => {
                 <button
                   onClick={saveTournamentPrediction}
                   disabled={bonusLocked || !bonusHasChanged || savingBonus}
-                  className="rounded-xl bg-indigo-600 px-6 py-3 font-black hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-400"
+                  className="rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-3 font-black text-white hover:from-emerald-400 hover:to-green-500 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400"
                 >
                   {bonusLocked
                     ? "Bonus låst"
@@ -1210,7 +1213,7 @@ const groupTables = useMemo<GroupTables>(() => {
                 </button>
 
                 {!bonusHasChanged && (
-                  <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-black text-emerald-300">
+                  <span className="rounded-full bg-emerald-500/15 border border-emerald-400/30 px-3 py-1 text-xs font-black text-emerald-300">
                     Uppdaterat
                   </span>
                 )}
@@ -1282,15 +1285,15 @@ const groupTables = useMemo<GroupTables>(() => {
                                   return (
                                     <tr
                                       key={row.team}
-                                      className="border-b border-slate-100 last:border-b-0"
+                                      className="border-b border-white/5 last:border-b-0"
                                     >
                                       <td className="py-2 pr-3">
                                         <span
                                           className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-black ${
                                             qualifiesDirectly
-                                              ? "bg-emerald-50 border border-emerald-200 text-emerald-300"
+                                              ? "bg-emerald-500/15 border border-emerald-400/30 text-emerald-300"
                                               : isThird
-                                                ? "bg-amber-50 border border-amber-200 text-amber-700"
+                                                ? "bg-amber-500/15 border border-amber-400/30 text-amber-200"
                                                 : "bg-slate-900 text-slate-400"
                                           }`}
                                         >
@@ -1468,7 +1471,7 @@ const groupTables = useMemo<GroupTables>(() => {
                           <div
                             className={`rounded-lg px-2 py-1.5 mb-1.5 flex justify-between gap-2 ${
                               homeIsWinner
-                                ? "bg-emerald-50 border border-emerald-200 text-emerald-300 font-black"
+                                ? "bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-black"
                                 : "bg-slate-900 text-white border border-white/10"
                             }`}
                           >
@@ -1481,7 +1484,7 @@ const groupTables = useMemo<GroupTables>(() => {
                           <div
                             className={`rounded-lg px-2 py-1.5 flex justify-between gap-2 ${
                               awayIsWinner
-                                ? "bg-emerald-50 border border-emerald-200 text-emerald-300 font-black"
+                                ? "bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 font-black"
                                 : "bg-slate-900 text-white border border-white/10"
                             }`}
                           >
@@ -1757,7 +1760,7 @@ const groupTables = useMemo<GroupTables>(() => {
                                     </span>
 
                                     {matchPoint ? (
-                                      <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-black text-emerald-300">
+                                      <span className="rounded-full bg-emerald-500/15 border border-emerald-400/30 px-3 py-1 text-xs font-black text-emerald-300">
                                         +{matchPoint.total_points ?? 0} poäng
                                       </span>
                                     ) : (
@@ -1849,7 +1852,7 @@ const groupTables = useMemo<GroupTables>(() => {
                                     e.target.value,
                                   )
                                 }
-                                className="mt-2 w-full max-w-md rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:opacity-40"
+                                className="mt-2 w-full max-w-md rounded-xl bg-slate-900 border border-white/10 px-4 py-3 outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 disabled:opacity-40"
                               >
                                 <option value="">Välj vinnare</option>
                                 <option value={homeDisplayName}>
@@ -1918,7 +1921,7 @@ const groupTables = useMemo<GroupTables>(() => {
               type="button"
               onClick={leaveLeague}
               disabled={leavingLeague}
-              className="mt-4 w-full rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm font-black text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-4 w-full rounded-xl bg-red-500/15 border border-red-400/30 px-4 py-3 text-sm font-black text-red-200 hover:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {leavingLeague ? "Lämnar..." : "Lämna liga"}
             </button>

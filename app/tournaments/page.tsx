@@ -41,7 +41,7 @@ export default function TournamentsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(245,158,11,.16),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,.15),transparent_30%),#0f172a] p-4 text-white md:p-8">
+    <main className="min-h-screen p-4 text-white md:p-8">
       <div className="mx-auto max-w-6xl">
         <Link href="/dashboard" className="text-emerald-300 hover:underline">
           ← Tillbaka till dashboard

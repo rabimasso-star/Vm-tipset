@@ -117,7 +117,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,.22),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,.18),transparent_30%),#0f172a] text-slate-50 p-4 md:p-8">
+    <main className="min-h-screen text-slate-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="rounded-[2rem] border border-white/10 bg-slate-900/70 p-6 md:p-8 shadow-2xl shadow-black/30">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">

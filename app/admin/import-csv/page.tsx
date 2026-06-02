@@ -90,7 +90,7 @@ export default function ImportCsvPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-8">
+    <main className="min-h-screen text-white p-8">
       <div className="max-w-5xl mx-auto">
         <Link href="/dashboard" className="text-emerald-300 hover:underline">
           ← Tillbaka till dashboard
@@ -107,7 +107,7 @@ export default function ImportCsvPage() {
           <div className="mb-6 rounded-2xl bg-slate-900 p-4">{message}</div>
         )}
 
-        <div className="rounded-3xl bg-white/10 border border-white/10 p-6">
+        <div className="rounded-3xl bg-slate-900/60 border border-white/10 p-6">
           <input
             type="file"
             accept=".csv,text/csv"

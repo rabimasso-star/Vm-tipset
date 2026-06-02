@@ -71,8 +71,8 @@ export default function JoinLeaguePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,.22),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,.18),transparent_30%),#0f172a] text-slate-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/70 p-8 shadow-2xl text-center">
+    <main className="min-h-screen text-slate-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/60 p-8 shadow-2xl shadow-black/30 text-center">
         <p className="text-sm font-black uppercase tracking-[0.35em] text-amber-400">
           Invite
         </p>

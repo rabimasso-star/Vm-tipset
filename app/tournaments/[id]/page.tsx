@@ -180,8 +180,8 @@ export default function TournamentPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-amber-50 text-white">
-        <div className="rounded-3xl border border-emerald-100 bg-slate-800/90 px-6 py-4 font-black shadow-xl">
+      <main className="flex min-h-screen items-center justify-center text-white">
+        <div className="rounded-3xl border border-white/10 bg-slate-900/60 px-6 py-4 font-black shadow-xl">
           Laddar turnering...
         </div>
       </main>
@@ -189,16 +189,16 @@ export default function TournamentPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-amber-50 p-4 text-white md:p-8">
+    <main className="min-h-screen p-4 text-white md:p-8">
       <div className="mx-auto max-w-6xl">
         <Link
           href="/tournaments"
-          className="inline-flex items-center rounded-full bg-slate-800/90 px-4 py-2 text-sm font-black text-emerald-300 shadow-sm ring-1 ring-emerald-100 hover:bg-emerald-50"
+          className="text-emerald-300 hover:underline"
         >
           ← Tillbaka till turneringar
         </Link>
 
-        <div className="mt-8 mb-10 overflow-hidden rounded-[2rem] border border-emerald-100 bg-slate-800/90 shadow-xl">
+        <div className="mt-8 mb-10 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900/60 shadow-xl shadow-black/20">
           <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-amber-500 p-6 text-white md:p-8">
             <p className="text-sm font-black uppercase tracking-[0.3em] text-emerald-50">
               🏆 Fotbolls-VM
@@ -213,7 +213,7 @@ export default function TournamentPage() {
         </div>
 
         {message && (
-          <div className="mb-6 rounded-3xl border border-red-200 bg-red-50 p-4 font-bold text-red-700 shadow-sm">
+          <div className="mb-6 rounded-3xl border border-red-400/30 bg-red-500/15 p-4 font-bold text-red-200 shadow-sm">
             {message}
           </div>
         )}
@@ -221,7 +221,7 @@ export default function TournamentPage() {
         <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
           <section className="h-fit rounded-3xl border border-white/10 bg-slate-800/90 p-6 shadow-xl">
             <div className="mb-6">
-              <p className="text-sm font-black uppercase tracking-[0.25em] text-emerald-600">
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-emerald-300">
                 Ny liga
               </p>
               <h2 className="mt-2 text-3xl font-black text-white">
@@ -232,7 +232,7 @@ export default function TournamentPage() {
               </p>
             </div>
 
-            <label className="text-sm font-bold text-slate-600">
+            <label className="text-sm font-bold text-slate-300">
               Liganamn
             </label>
             <input
@@ -240,16 +240,16 @@ export default function TournamentPage() {
               placeholder="Mitt VM-tips"
               value={leagueName}
               onChange={(e) => setLeagueName(e.target.value)}
-              className="mt-2 mb-4 w-full rounded-2xl border border-white/10 bg-slate-950 border border-white/10 px-4 py-3 text-white font-bold text-white outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition focus:border-emerald-400 focus:bg-slate-800/90 focus:ring-4 focus:ring-emerald-100"
+              className="mt-2 mb-4 w-full rounded-2xl border border-white/10 bg-slate-950 border border-white/10 px-4 py-3 text-white font-bold text-white outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition focus:border-emerald-400 focus:bg-slate-800/90 focus:ring-4 focus:ring-emerald-500/30"
             />
 
-            <label className="text-sm font-bold text-slate-600">
+            <label className="text-sm font-bold text-slate-300">
               Typ av liga
             </label>
             <select
               value={leagueType}
               onChange={(e) => setLeagueType(e.target.value)}
-              className="mt-2 mb-5 w-full rounded-2xl border border-white/10 bg-slate-950 border border-white/10 px-4 py-3 text-white font-bold text-white outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition focus:border-emerald-400 focus:bg-slate-800/90 focus:ring-4 focus:ring-emerald-100"
+              className="mt-2 mb-5 w-full rounded-2xl border border-white/10 bg-slate-950 border border-white/10 px-4 py-3 text-white font-bold text-white outline-none border border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition focus:border-emerald-400 focus:bg-slate-800/90 focus:ring-4 focus:ring-emerald-500/30"
             >
               <option value="private">Privat liga</option>
               <option value="company">Företagsliga</option>
@@ -263,7 +263,7 @@ export default function TournamentPage() {
               {creatingLeague ? "Skapar liga..." : "Skapa liga"}
             </button>
 
-            <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-800 ring-1 ring-amber-100">
+            <div className="mt-5 rounded-2xl bg-amber-500/15 border border-amber-400/30 p-4 text-sm font-bold text-amber-200">
               Tips: välj privat liga för kompisgänget och dela invite-länken efteråt.
             </div>
           </section>
@@ -271,20 +271,20 @@ export default function TournamentPage() {
           <section className="rounded-3xl border border-white/10 bg-slate-800/90 p-6 shadow-xl">
             <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="text-sm font-black uppercase tracking-[0.25em] text-emerald-600">
+                <p className="text-sm font-black uppercase tracking-[0.25em] text-emerald-300">
                   Spelschema
                 </p>
                 <h2 className="mt-2 text-3xl font-black text-white">
                   Matcher
                 </h2>
               </div>
-              <span className="w-fit rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-300 ring-1 ring-emerald-100">
+              <span className="w-fit rounded-full bg-emerald-400/10 border border-emerald-400/30 px-4 py-2 text-sm font-black text-emerald-300">
                 {matches.length} matcher
               </span>
             </div>
 
             {matches.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-900 p-8 text-center font-bold text-slate-400">
+              <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900 p-8 text-center font-bold text-slate-400">
                 Inga matcher finns ännu för denna turnering.
               </div>
             ) : (
@@ -292,7 +292,7 @@ export default function TournamentPage() {
                 {matches.map((match) => (
                   <div
                     key={match.id}
-                    className="rounded-3xl border border-white/10 bg-gradient-to-r from-slate-50 to-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md"
+                    className="rounded-3xl border border-white/10 bg-slate-900 p-4 shadow-sm transition hover:border-emerald-400/40 hover:bg-slate-800"
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
@@ -304,7 +304,7 @@ export default function TournamentPage() {
                         </h3>
                       </div>
 
-                      <span className="w-fit rounded-full bg-slate-900 px-3 py-1 text-xs font-black uppercase text-white">
+                      <span className="w-fit rounded-full bg-white/10 border border-white/10 px-3 py-1 text-xs font-black uppercase text-slate-200">
                         {match.status}
                       </span>
                     </div>

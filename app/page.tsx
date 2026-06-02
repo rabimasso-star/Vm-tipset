@@ -69,9 +69,12 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-3xl bg-white/10 border border-white/10 p-8 shadow-2xl">
-        <h1 className="text-3xl font-black mb-2">VM-tipset</h1>
+    <main className="min-h-screen text-white flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-3xl bg-slate-900/60 border border-white/10 p-8 shadow-2xl shadow-black/30">
+        <p className="text-sm font-black uppercase tracking-[0.35em] text-amber-400">
+          VM 2026
+        </p>
+        <h1 className="text-3xl font-black mt-2 mb-2">VM-tipset</h1>
         <p className="text-slate-300 mb-6">
           Logga in eller skapa konto för att börja tippa.
         </p>

@@ -259,14 +259,14 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
+      <main className="flex min-h-screen items-center justify-center text-white">
         Laddar admin...
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 p-4 text-white md:p-8">
+    <main className="min-h-screen p-4 text-white md:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8">
           <h1 className="text-3xl font-black md:text-5xl">Adminpanel</h1>
@@ -281,7 +281,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        <div className="mb-8 rounded-3xl border border-white/10 bg-white/10 p-6">
+        <div className="mb-8 rounded-3xl border border-white/10 bg-slate-900/60 p-6">
           <label className="text-sm text-slate-400">Turnering</label>
           <select
             value={selectedTournamentId}
@@ -296,7 +296,7 @@ export default function AdminPage() {
           </select>
         </div>
 
-        <div className="mb-8 rounded-3xl border border-white/10 bg-white/10 p-6">
+        <div className="mb-8 rounded-3xl border border-white/10 bg-slate-900/60 p-6">
           <h2 className="mb-5 text-2xl font-black">Slutresultat turnering</h2>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -352,13 +352,13 @@ export default function AdminPage() {
           <button
             onClick={saveTournamentResult}
             disabled={savingTournamentResult}
-            className="mt-5 rounded-xl bg-purple-500 px-6 py-3 font-black hover:bg-purple-400 disabled:bg-slate-700"
+            className="mt-5 rounded-xl bg-amber-500 px-6 py-3 font-black text-slate-950 hover:bg-amber-400 disabled:bg-slate-700 disabled:text-slate-400"
           >
             {savingTournamentResult ? "Sparar..." : "Spara slutresultat"}
           </button>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/10 p-6">
+        <div className="rounded-3xl border border-white/10 bg-slate-900/60 p-6">
           <h2 className="mb-5 text-2xl font-black">Matcher</h2>
 
           <div className="space-y-4">

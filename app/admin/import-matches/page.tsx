@@ -64,7 +64,7 @@ export default function ImportMatchesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-8">
+    <main className="min-h-screen text-white p-8">
       <div className="max-w-5xl mx-auto">
         <Link href="/dashboard" className="text-emerald-300 hover:underline">
           ← Tillbaka till dashboard
@@ -83,7 +83,7 @@ export default function ImportMatchesPage() {
           </div>
         )}
 
-        <div className="rounded-3xl bg-white/10 border border-white/10 p-6">
+        <div className="rounded-3xl bg-slate-900/60 border border-white/10 p-6">
           <textarea
             value={jsonInput}
             onChange={(e) => setJsonInput(e.target.value)}
