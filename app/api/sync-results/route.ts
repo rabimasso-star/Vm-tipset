@@ -28,10 +28,11 @@ function mapStatus(apiStatus: string) {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const secret = searchParams.get("secret");
+  // Vercel Cron sends `Authorization: Bearer $CRON_SECRET` automatically.
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = request.headers.get("authorization");
 
-  if (secret !== process.env.SYNC_SECRET) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
